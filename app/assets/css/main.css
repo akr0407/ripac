@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom global styles */
+html {
+  scroll-behavior: smooth;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  @apply bg-base-200 text-base-content selection:bg-primary selection:text-primary-content;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Page Transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(4px);
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  @apply bg-white/70 dark:bg-base-100/70 backdrop-blur-xl border border-white/20 shadow-lg;
+}
+
+.glass-sidebar {
+  @apply bg-base-100/80 backdrop-blur-md border-r border-base-content/5;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-base-300 rounded-full hover:bg-base-content/20 transition-colors;
+}
+
+/* Smooth Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Card Hover Effects */
+.card-hover-effect {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20;
+}
