@@ -31,6 +31,10 @@ export default defineNuxtConfig({
     // Session secret
     session: {
       password: process.env.NUXT_SESSION_PASSWORD || 'your-super-secret-session-password-min-32-chars',
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      },
     },
     public: {
       // Public SSO config (for client-side)
