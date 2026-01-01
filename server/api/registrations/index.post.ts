@@ -29,6 +29,17 @@ function generateRegNumber() {
 
 export default defineEventHandler(async (event) => {
     try {
+        // Get the user session and organization
+        const session = await requireUserSession(event);
+        const organizationId = session.user.currentOrganizationId;
+
+        if (!organizationId) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'No organization selected',
+            });
+        }
+
         const body = await readBody(event);
         const data = createRegistrationSchema.parse(body);
 
@@ -39,6 +50,7 @@ export default defineEventHandler(async (event) => {
             const [newPatient] = await db
                 .insert(patients)
                 .values({
+                    organizationId,
                     fullName: data.patient.fullName,
                     mrNumber: data.patient.mrNumber || null,
                     phone: data.patient.phone || null,
@@ -63,6 +75,7 @@ export default defineEventHandler(async (event) => {
         const [registration] = await db
             .insert(registrations)
             .values({
+                organizationId,
                 patientId,
                 registrationNumber: generateRegNumber(),
                 ward: data.ward || null,
@@ -82,6 +95,7 @@ export default defineEventHandler(async (event) => {
             });
         }
         if ((error as any).statusCode) throw error;
+        console.error('Registration creation error:', error);
         throw createError({
             statusCode: 500,
             statusMessage: 'Failed to create registration',

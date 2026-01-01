@@ -3,13 +3,14 @@ import { examinations } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+// Flexible schema that accepts any value and converts to string or null
 const examinationSchema = z.object({
-    physicalExamination: z.string().optional(),
-    otherExamination: z.string().optional(),
-    diagnosis: z.string().optional(),
-    differentialDiagnosis: z.string().optional(),
-    treatment: z.string().optional(),
-});
+    physicalExamination: z.any().optional().transform(val => val ? String(val) : null),
+    otherExamination: z.any().optional().transform(val => val ? String(val) : null),
+    diagnosis: z.any().optional().transform(val => val ? String(val) : null),
+    differentialDiagnosis: z.any().optional().transform(val => val ? String(val) : null),
+    treatment: z.any().optional().transform(val => val ? String(val) : null),
+}).passthrough(); // Allow extra fields
 
 export default defineEventHandler(async (event) => {
     try {
@@ -25,14 +26,32 @@ export default defineEventHandler(async (event) => {
 
         let result;
         if (existing) {
-            [result] = await db.update(examinations).set({ ...data, updatedAt: new Date() }).where(eq(examinations.id, existing.id)).returning();
+            [result] = await db.update(examinations).set({
+                physicalExamination: data.physicalExamination,
+                otherExamination: data.otherExamination,
+                diagnosis: data.diagnosis,
+                differentialDiagnosis: data.differentialDiagnosis,
+                treatment: data.treatment,
+                updatedAt: new Date()
+            }).where(eq(examinations.id, existing.id)).returning();
         } else {
-            [result] = await db.insert(examinations).values({ ...data, registrationId }).returning();
+            [result] = await db.insert(examinations).values({
+                registrationId,
+                physicalExamination: data.physicalExamination,
+                otherExamination: data.otherExamination,
+                diagnosis: data.diagnosis,
+                differentialDiagnosis: data.differentialDiagnosis,
+                treatment: data.treatment,
+            }).returning();
         }
 
         return { success: true, data: result };
     } catch (error) {
-        if (error instanceof z.ZodError) throw createError({ statusCode: 400, statusMessage: 'Validation failed' });
+        console.error('Examination save error:', error);
+        if (error instanceof z.ZodError) {
+            console.error('Zod errors:', error.errors);
+            throw createError({ statusCode: 400, statusMessage: 'Validation failed', data: error.errors });
+        }
         if ((error as any).statusCode) throw error;
         throw createError({ statusCode: 500, statusMessage: 'Failed to save examination' });
     }

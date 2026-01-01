@@ -24,39 +24,30 @@
           <Save class="w-5 h-5" />
           {{ saving ? 'Saving...' : 'Save All' }}
         </button>
-        <button class="btn btn-outline" @click="printRecord">
-          <Printer class="w-5 h-5" />
-          Print
+
+        <button class="btn btn-secondary" @click="downloadPDF(false)" :disabled="isGeneratingPdf">
+          <Download class="w-5 h-5" />
+          {{ isGeneratingPdf ? 'Generating...' : 'Download PDF' }}
+        </button>
+        <button class="btn btn-outline" @click="downloadPDF(true)" :disabled="isGeneratingPdf">
+          <Eye class="w-5 h-5" />
+          Preview PDF
         </button>
       </div>
     </div>
 
-    <!-- Print Header -->
-    <div class="hidden print:block mb-8">
-      <h1 class="text-3xl font-bold text-center mb-2">Medical Resume</h1>
-      <div class="text-center opacity-75 mb-6">RIPAC Hospital Information System</div>
-      <div class="grid grid-cols-2 gap-4 border p-4 rounded-lg" v-if="registration?.patient">
-        <div>
-          <p><span class="font-bold">Name:</span> {{ registration.patient.fullName }}</p>
-          <p><span class="font-bold">MR Number:</span> {{ registration.patient.mrNumber }}</p>
-        </div>
-        <div>
-          <p><span class="font-bold">Registration:</span> {{ registration.registrationNumber }}</p>
-          <p><span class="font-bold">Date:</span> {{ formatDate(registration.createdAt) }}</p>
-        </div>
-      </div>
-    </div>
 
-    <!-- Content -->
-    <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- Web Layout (Hidden when printing) -->
+    <div class="flex flex-col lg:flex-row gap-6 print:hidden">
       <!-- Stepper Navigation -->
-      <div class="card bg-base-100 shadow lg:w-56 shrink-0 print:hidden">
+      <div class="card bg-base-100 shadow lg:w-56 shrink-0">
         <div class="card-body p-4">
           <ul class="steps steps-vertical">
             <li v-for="(step, index) in steps" :key="step.key"
                 class="step cursor-pointer"
                 :class="{ 'step-primary': currentStep >= index }"
-                @click="currentStep = index">
+                @click="goToStep(index)">
               {{ step.label }}
             </li>
           </ul>
@@ -114,20 +105,40 @@
               <h3 class="text-lg font-semibold mb-4">Medical History</h3>
               <div class="space-y-4">
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Present Complaint</span></label>
-                  <textarea spellcheck="true" v-model="medicalHistory.presentComplaint" class="textarea textarea-bordered" rows="3"></textarea>
+                  <label class="label">
+                    <span class="label-text">Present Complaint</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(medicalHistory, 'presentComplaint')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="medicalHistory.presentComplaint" class="textarea textarea-bordered" rows="3"></textarea>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Past Medical History</span></label>
-                  <textarea spellcheck="true" v-model="medicalHistory.pastMedicalHistory" class="textarea textarea-bordered" rows="3"></textarea>
+                  <label class="label">
+                    <span class="label-text">Past Medical History</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(medicalHistory, 'pastMedicalHistory')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="medicalHistory.pastMedicalHistory" class="textarea textarea-bordered" rows="3"></textarea>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Allergic History</span></label>
-                  <textarea spellcheck="true" v-model="medicalHistory.allergicHistory" class="textarea textarea-bordered" rows="2"></textarea>
+                  <label class="label">
+                    <span class="label-text">Allergic History</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(medicalHistory, 'allergicHistory')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="medicalHistory.allergicHistory" class="textarea textarea-bordered" rows="2"></textarea>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Current Medication</span></label>
-                  <textarea spellcheck="true" v-model="medicalHistory.currentMedication" class="textarea textarea-bordered" rows="2"></textarea>
+                  <label class="label">
+                    <span class="label-text">Current Medication</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(medicalHistory, 'currentMedication')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="medicalHistory.currentMedication" class="textarea textarea-bordered" rows="2"></textarea>
                 </div>
               </div>
             </div>
@@ -170,20 +181,40 @@
               <h3 class="text-lg font-semibold mb-4">Examination & Diagnosis</h3>
               <div class="space-y-4">
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Physical Examination</span></label>
-                  <textarea spellcheck="true" v-model="examination.physicalExamination" class="textarea textarea-bordered" rows="3"></textarea>
+                  <label class="label">
+                    <span class="label-text">Physical Examination</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(examination, 'physicalExamination')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="examination.physicalExamination" class="textarea textarea-bordered" rows="3"></textarea>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Other Examinations</span></label>
-                  <textarea spellcheck="true" v-model="examination.otherExamination" class="textarea textarea-bordered" rows="3"></textarea>
+                  <label class="label">
+                    <span class="label-text">Other Examinations</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(examination, 'otherExamination')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="examination.otherExamination" class="textarea textarea-bordered" rows="3"></textarea>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Diagnosis</span></label>
-                  <textarea spellcheck="true" v-model="examination.diagnosis" class="textarea textarea-bordered" rows="2"></textarea>
+                  <label class="label">
+                    <span class="label-text">Diagnosis</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(examination, 'diagnosis')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="examination.diagnosis" class="textarea textarea-bordered" rows="2"></textarea>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Treatment</span></label>
-                  <textarea spellcheck="true" v-model="examination.treatment" class="textarea textarea-bordered" rows="3"></textarea>
+                  <label class="label">
+                    <span class="label-text">Treatment</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(examination, 'treatment')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="examination.treatment" class="textarea textarea-bordered" rows="3"></textarea>
                 </div>
               </div>
             </div>
@@ -224,8 +255,13 @@
                   </label>
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Notes</span></label>
-                  <textarea spellcheck="true" v-model="recommendation.notes" class="textarea textarea-bordered" rows="3"></textarea>
+                  <label class="label">
+                    <span class="label-text">Notes</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(recommendation, 'notes')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="recommendation.notes" class="textarea textarea-bordered" rows="3"></textarea>
                 </div>
               </div>
             </div>
@@ -235,14 +271,27 @@
             <div v-show="currentStep === 5" class="print:!block">
               <h3 class="text-lg font-semibold mb-4">Treating Doctors</h3>
               <div class="space-y-4">
-                <div v-for="(_, index) in treatingDoctors" :key="index" class="form-control">
-                  <label class="label"><span class="label-text">Doctor {{ index + 1 }}</span></label>
-                  <select v-model="treatingDoctors[index]" class="select select-bordered">
-                    <option :value="null">Select doctor</option>
-                    <option v-for="doc in doctorOptions" :key="doc.value" :value="doc.value">
-                      {{ doc.label }}
-                    </option>
-                  </select>
+                <div v-for="(doc, index) in treatingDoctors" :key="index" class="form-control p-4 border rounded-lg bg-base-100">
+                  <div class="flex items-center gap-4">
+                    <div class="flex-1">
+                        <label class="label"><span class="label-text">Doctor {{ index + 1 }}</span></label>
+                        <select v-model="treatingDoctors[index].id" class="select select-bordered w-full">
+                            <option :value="null">Select doctor</option>
+                            <option v-for="opt in doctorOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-control" v-if="treatingDoctors[index].id">
+                         <label class="label cursor-pointer flex flex-col items-center gap-2">
+                            <span class="label-text text-xs font-bold">Main</span>
+                            <input type="radio" name="mainDoctor" class="radio radio-primary" 
+                                :checked="treatingDoctors[index].isMain"
+                                @change="treatingDoctors.forEach((d, i) => d.isMain = i === index)"
+                            />
+                        </label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -271,25 +320,57 @@
           <!-- Navigation -->
           <div class="divider print:hidden"></div>
           <div class="flex justify-between print:hidden">
-            <button class="btn btn-ghost" :disabled="currentStep === 0" @click="currentStep--">
+            <button class="btn btn-ghost" :disabled="currentStep === 0 || saving" @click="goToPrevStep">
               Previous
             </button>
-            <button v-if="currentStep < steps.length - 1" class="btn btn-primary" @click="currentStep++">
-              Next
+            <button v-if="currentStep < steps.length - 1" class="btn btn-primary" :disabled="saving" @click="goToNextStep">
+              {{ saving ? 'Saving...' : 'Next' }}
             </button>
             <button v-else class="btn btn-success" @click="handleSaveAll" :disabled="saving">
-              Complete
+              {{ saving ? 'Saving...' : 'Complete' }}
             </button>
           </div>
         </div>
       </div>
     </div>
+    <!-- PDF Preview Modal -->
+    <dialog id="pdf_preview_modal" class="modal">
+      <div class="modal-box w-11/12 max-w-5xl h-[90vh] p-0 overflow-hidden relative bg-slate-100 flex flex-col">
+         <div class="flex justify-between items-center p-4 bg-white shadow-sm z-10">
+            <h3 class="font-bold text-lg">PDF Preview</h3>
+             <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost" @click="closePreview">✕</button>
+            </form>
+        </div>
+        <div class="flex-1 w-full h-full relative">
+            <iframe v-if="pdfPreviewUrl" :src="pdfPreviewUrl" class="w-full h-full border-0"></iframe>
+            <div v-else class="flex justify-center items-center h-full">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+      </div>
+       <form method="dialog" class="modal-backdrop">
+        <button @click="closePreview">close</button>
+      </form>
+    </dialog>
+
+    <SpellingReviewModal 
+        ref="spellingModal"
+        :model-value="true"
+        :segments="spellingSegments" 
+        @save="handleSpellingSave"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Save, Printer } from 'lucide-vue-next';
+definePageMeta({
+  middleware: 'auth'
+});
+
+import { Save, Download, Eye, Wand2 } from 'lucide-vue-next';
 import dayjs from 'dayjs';
+
 
 const route = useRoute();
 const registrationId = route.params.id as string;
@@ -297,6 +378,8 @@ const registrationId = route.params.id as string;
 const registration = ref<any>(null);
 const currentStep = ref(0);
 const saving = ref(false);
+const isGeneratingPdf = ref(false);
+const pdfPreviewUrl = ref<string | null>(null);
 
 useKeyboardShortcuts([
   { key: 's', ctrl: true, handler: () => handleSaveAll(), description: 'Save all data' },
@@ -311,6 +394,36 @@ const steps = [
   { key: 'doctors', label: 'Treating Doctor' },
   { key: 'comments', label: 'Comments' },
 ];
+
+const { checkSpelling, isReady: isAutoCorrectReady } = useAutoCorrect();
+
+// Spelling Modal State
+const spellingModal = ref();
+const spellingSegments = ref<any[]>([]);
+const editingTarget = ref<any>(null);
+const editingKey = ref<string>('');
+
+function applyAutoCorrect(target: any, key: string) {
+    if (!target || !target[key]) return;
+    
+    editingTarget.value = target;
+    editingKey.value = key;
+
+    const { segments, typoCount } = checkSpelling(target[key]);
+    
+    if (typoCount > 0) {
+        spellingSegments.value = segments;
+        spellingModal.value?.show();
+    } else {
+        alert('No spelling errors found.');
+    }
+}
+
+function handleSpellingSave(correctedText: string) {
+    if (editingTarget.value && editingKey.value) {
+        editingTarget.value[editingKey.value] = correctedText;
+    }
+}
 
 const medicalHistory = ref({
   presentComplaint: '',
@@ -344,7 +457,12 @@ const recommendation = ref({
   notes: '',
 });
 
-const treatingDoctors = ref<(string | null)[]>([null, null, null, null]);
+const treatingDoctors = ref<{ id: string | null; isMain: boolean }[]>([
+  { id: null, isMain: false },
+  { id: null, isMain: false },
+  { id: null, isMain: false },
+  { id: null, isMain: false }
+]);
 const doctorOptions = ref<{ label: string; value: string }[]>([]);
 const comments = ref<any[]>([]);
 const newComment = ref('');
@@ -398,11 +516,18 @@ async function fetchTreatingDoctors() {
   try {
     const response = await $fetch<{ data: any[] }>(`/api/registrations/${registrationId}/treating-doctors`);
     if (response.data) {
-      const ids = [null, null, null, null];
+      const docs = [
+        { id: null, isMain: false },
+        { id: null, isMain: false },
+        { id: null, isMain: false },
+        { id: null, isMain: false }
+      ];
       response.data.forEach((d: any) => {
-        if (d.doctorSequence >= 1 && d.doctorSequence <= 4) ids[d.doctorSequence - 1] = d.doctorId;
+        if (d.doctorSequence >= 1 && d.doctorSequence <= 4) {
+          docs[d.doctorSequence - 1] = { id: d.doctorId, isMain: d.isMain || false };
+        }
       });
-      treatingDoctors.value = ids as any;
+      treatingDoctors.value = docs as any;
     }
   } catch (e) {}
 }
@@ -419,6 +544,86 @@ async function fetchDoctors() {
     const response = await $fetch<{ data: any[] }>('/api/doctors');
     doctorOptions.value = response.data.map((d: any) => ({ label: d.fullName, value: d.id }));
   } catch (e) {}
+}
+
+
+async function saveCurrentStep() {
+  saving.value = true;
+  try {
+    switch (currentStep.value) {
+      case 0: // Info & Admission
+        await $fetch(`/api/registrations/${registrationId}`, { 
+          method: 'PUT', 
+          body: { 
+            ward: registration.value.ward, 
+            admissionDate: registration.value.admissionDate, 
+            dischargeDate: registration.value.dischargeDate 
+          } 
+        });
+        break;
+      case 1: // Medical History
+        await $fetch(`/api/registrations/${registrationId}/history`, { method: 'POST', body: medicalHistory.value });
+        break;
+      case 2: // Vital Signs
+        await $fetch(`/api/registrations/${registrationId}/vitals`, { method: 'POST', body: vitalSigns.value });
+        break;
+      case 3: // Examination
+        await $fetch(`/api/registrations/${registrationId}/examinations`, { method: 'POST', body: examination.value });
+        break;
+      case 4: // Recommendation
+        await $fetch(`/api/registrations/${registrationId}/recommendations`, { method: 'POST', body: recommendation.value });
+        break;
+      case 5: // Treating Doctor
+        await $fetch(`/api/registrations/${registrationId}/treating-doctors`, { 
+          method: 'POST', 
+          body: { 
+              doctors: treatingDoctors.value.map((d, index) => ({ 
+                  doctorId: d.id, 
+                  sequence: index + 1,
+                  isMain: d.isMain 
+              })) 
+          } 
+        });
+        break;
+      // Step 6 (Comments) handled separately via "Add Comment"
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Failed to save step data');
+    throw e; // Propagate error to stop navigation
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function goToNextStep() {
+  try {
+    await saveCurrentStep();
+    currentStep.value++;
+  } catch (e) {
+    // Error already handled in saveCurrentStep
+  }
+}
+
+function goToPrevStep() {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+  }
+}
+
+async function goToStep(index: number) {
+  // If moving forward or staying, save current step first. 
+  // If moving backward, generally safe to just move, but user might expect save.
+  // The user requirement is "when next per step they save". 
+  // For clicking stepper, it acts like a jump. It's safer to save the *current* step before leaving it.
+  try {
+    if (index !== currentStep.value) {
+      await saveCurrentStep();
+      currentStep.value = index;
+    }
+  } catch (e) {
+    // Stay on current step if save fails
+  }
 }
 
 async function handleSaveAll() {
@@ -468,7 +673,323 @@ onMounted(async () => {
   ]);
 });
 
-function printRecord() {
-  window.print();
+
+
+
+
+
+
+async function downloadPDF(preview = false) {
+  isGeneratingPdf.value = true;
+  await nextTick();
+
+  try {
+    const { jsPDF } = await import('jspdf');
+    const autoTable = (await import('jspdf-autotable')).default;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Config
+    const margin = 15;
+    let y = 15;
+
+    const org = registration.value?.organization;
+
+    // Logo Handling (If URL exists)
+    if (org?.logo) {
+      try {
+        const img = new Image();
+        img.src = org.logo;
+        // Wait simple logic, or just assume it loads? jsPDF needs base64 or loaded img.
+        // For simplicity, let's try adding it. If CORS issues, might fail.
+        // Better: Use Name if Logo fails or just Text. Use small timeout?
+        // Let's use simple addImage and catch error
+        
+        // Calculate aspect ratio to fit height 20mm
+        // doc.addImage(org.logo, 'JPEG', margin, y, 20, 20);
+        // Centered logo?
+        doc.addImage(org.logo, 'PNG', (pageWidth/2) - 15, y, 30, 20, undefined, 'FAST'); // Assuming PNG/JPEG
+        y += 25;
+      } catch (e) {
+        console.warn('Logo load failed, using text', e);
+         doc.setFont("helvetica", "bold");
+         doc.setFontSize(18);
+         doc.text(org?.name || "RIPAC HOSPITAL", pageWidth / 2, y + 10, { align: "center" });
+         y += 15;
+      }
+    } else {
+        // Fallback or No Logo
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text(org?.name || "RIPAC HOSPITAL", pageWidth / 2, y + 5, { align: "center" });
+        y += 12;
+    }
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    
+    // Address (Multiline support)
+    const address = org?.address || "123 Healthcare Avenue, Medical District";
+    const splitAddr = doc.splitTextToSize(address, pageWidth - (margin * 2));
+    doc.text(splitAddr, pageWidth / 2, y, { align: "center" });
+    y += (splitAddr.length * 5);
+    
+    doc.text("Phone: (123) 456-7890 | Email: info@ripachospital.com", pageWidth / 2, y, { align: "center" });
+
+    y += 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("MEDICAL RESUME", pageWidth / 2, y, { align: "center" });
+    doc.line(margin, y + 2, pageWidth - margin, y + 2); // Underline
+
+    y += 10;
+
+    // Helper for null/undefined
+    const val = (v: any) => v || '-';
+    // Helper for booleans
+    const bool = (v: any) => v ? 'Yes' : 'No';
+
+    // Patient Info Table
+    // @ts-ignore
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
+      bodyStyles: { lineColor: [0, 0, 0], lineWidth: 0.1 },
+      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak', font: 'helvetica' },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 35 },
+        1: { cellWidth: 55 },
+        2: { fontStyle: 'bold', cellWidth: 35 },
+        3: { cellWidth: 55 }
+      },
+      body: [
+        ['Patient Name', val(registration.value?.patient?.fullName), 'MR Number', val(registration.value?.patient?.mrNumber)],
+        [
+          'Age / Sex', 
+          `${val(registration.value?.patient?.age)} ${val(registration.value?.patient?.ageUnit)} / ${registration.value?.patient?.sex ? registration.value.patient.sex.toUpperCase() : '-'}`,
+          'Registration No', 
+          val(registration.value?.registrationNumber)
+        ],
+        ['Nationality', val(registration.value?.patient?.nationality), 'Admission Date', formatDate(registration.value?.admissionDate || '')],
+        ['Address', { content: val(registration.value?.patient?.currentAddress), colSpan: 3 }],
+        ['Ward', val(registration.value?.ward), 'Discharge Date', formatDate(registration.value?.dischargeDate || '')]
+      ]
+    });
+
+    // @ts-ignore
+    y = doc.lastAutoTable.finalY + 10;
+
+    // Diagnosis
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("DIAGNOSIS", margin, y);
+    doc.line(margin, y + 1, pageWidth - margin, y + 1); // Separator
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    // Split text to fit width
+    const diagnosisText = doc.splitTextToSize(val(examination.value.diagnosis), pageWidth - (margin * 2));
+    doc.text(diagnosisText, margin, y);
+    y += (diagnosisText.length * 5) + 5;
+
+    // History & Vitals 
+    
+    // History Table
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("MEDICAL HISTORY", margin, y);
+    doc.line(margin, y + 1, pageWidth - margin, y + 1);
+    y += 5;
+
+    // @ts-ignore
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'plain',
+      styles: { fontSize: 10, cellPadding: 1, overflow: 'linebreak' },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 }, 1: { cellWidth: 'auto' } },
+      body: [
+        ['Present Complaint:', val(medicalHistory.value.presentComplaint)],
+        ['Past History:', val(medicalHistory.value.pastMedicalHistory)],
+        ['Allergies:', val(medicalHistory.value.allergicHistory)],
+        ['Current Medication:', val(medicalHistory.value.currentMedication)]
+      ]
+    });
+    // @ts-ignore
+    y = doc.lastAutoTable.finalY + 10;
+    
+    if (y > 250) { doc.addPage(); y = 20; }
+
+    // Vitals
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("VITAL SIGNS", margin, y);
+    doc.line(margin, y + 1, pageWidth - margin, y + 1);
+    y += 5;
+
+     // @ts-ignore
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0,0,0] },
+      bodyStyles: { lineWidth: 0.1, lineColor: [0,0,0], halign: 'center' },
+      head: [['Pulse', 'BP', 'RR', 'Temp', 'SpO2', 'GCS']],
+      body: [[
+        val(vitalSigns.value.pulseRate),
+        val(vitalSigns.value.bloodPressure),
+        val(vitalSigns.value.respiratoryRate),
+        val(vitalSigns.value.temperature),
+        val(vitalSigns.value.spo2),
+        val(vitalSigns.value.gcs)
+      ]]
+    });
+    // @ts-ignore
+    y = doc.lastAutoTable.finalY + 10;
+
+    // Examination
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("EXAMINATION & TREATMENT", margin, y);
+    doc.line(margin, y + 1, pageWidth - margin, y + 1);
+    y += 5;
+
+    // @ts-ignore
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      theme: 'plain',
+      styles: { fontSize: 10, cellPadding: 2 },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } },
+      body: [
+        ['Physical Exam:', val(examination.value.physicalExamination)],
+        ['Treatment:', val(examination.value.treatment)]
+      ]
+    });
+    // @ts-ignore
+    y = doc.lastAutoTable.finalY + 10;
+
+    // Recommendations
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("RECOMMENDATIONS", margin, y);
+    doc.line(margin, y + 1, pageWidth - margin, y + 1);
+    y += 5;
+
+    const recs = [
+      `Request Repatriation: ${bool(recommendation.value.requestRepatriation)}`,
+      `Fit to Fly: ${bool(recommendation.value.fitToFly)}`,
+      `Requires Evacuation: ${bool(recommendation.value.requiresEvacuation)}`,
+      `Needs Wheelchair: ${bool(recommendation.value.needsWheelchair)}`
+    ];
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(recs.join("   |   "), margin, y + 4);
+    y += 10;
+    
+    const notes = doc.splitTextToSize(`Notes: ${val(recommendation.value.notes)}`, pageWidth - (margin * 2));
+    doc.text(notes, margin, y);
+    y += (notes.length * 5) + 10;
+
+    // Treating Doctors
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.text("TREATING DOCTORS", margin, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    
+    // Filter and map doctors
+    const docs = treatingDoctors.value
+        .filter(d => d.id)
+        .map(d => ({
+            name: doctorOptions.value.find(opt => opt.value === d.id)?.label,
+            isMain: d.isMain
+        }))
+        .filter(d => d.name);
+
+    if (docs.length) {
+      doc.setFont("helvetica", "bold");
+      // List doctors
+      docs.forEach(d => {
+        const suffix = d.isMain ? ' (Main Treating Doctor)' : '';
+        doc.text(`• ${d.name}${suffix}`, margin + 5, y);
+        y += 5;
+      });
+    } else {
+        doc.text("No doctors recorded.", margin + 5, y);
+        y += 5;
+    }
+
+    // Footer / Signatures
+    y = y + 15; 
+    
+    if (y > 250) { 
+        doc.addPage(); 
+        y = 30; 
+    }
+
+    const sigY = y;
+    doc.setLineWidth(0.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    
+    doc.line(margin + 20, sigY, margin + 80, sigY); 
+    doc.text("Patient / Family Signature", margin + 30, sigY + 5);
+
+    doc.line(pageWidth - 80, sigY, pageWidth - 20, sigY); 
+    
+    // Use Main Doctor for signature line, or first one, or default
+    const mainDoc = docs.find(d => d.isMain) || docs[0];
+    const sigLabel = mainDoc ? mainDoc.name : "Treating Doctor Signature";
+    
+    // Center the text under the line
+    const textWidth = doc.getTextWidth(sigLabel || '');
+    const lineCenter = (pageWidth - 80) + ((pageWidth - 20) - (pageWidth - 80)) / 2;
+    // doc.text aligns to start by default
+    doc.text(sigLabel || "Treating Doctor", lineCenter, sigY + 5, { align: 'center' });
+    
+    // Page Number
+    const pageCount = doc.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+           `Printed on ${dayjs().format('DD MMM YYYY HH:mm')} | ${val(org?.name) || 'RIPAC HIS'} | Page ${i} of ${pageCount}`,
+           pageWidth / 2,
+           doc.internal.pageSize.getHeight() - 10,
+           { align: 'center' }
+        );
+    }
+
+    if (preview) {
+        pdfPreviewUrl.value = URL.createObjectURL(doc.output('blob'));
+        // Open modal
+        const modal = document.getElementById('pdf_preview_modal') as HTMLDialogElement;
+        if (modal) modal.showModal();
+    } else {
+        doc.save(`Medical_Resume_${registration.value?.registrationNumber || 'Doc'}.pdf`);
+    }
+
+  } catch (e) {
+    alert('Failed to generate PDF: ' + (e instanceof Error ? e.message : String(e)));
+    console.error('PDF Generation Error:', e);
+  } finally {
+    isGeneratingPdf.value = false;
+  }
+}
+
+function closePreview() {
+    const modal = document.getElementById('pdf_preview_modal') as HTMLDialogElement;
+    if (modal) modal.close();
+    if (pdfPreviewUrl.value) {
+        URL.revokeObjectURL(pdfPreviewUrl.value);
+        pdfPreviewUrl.value = null;
+    }
 }
 </script>

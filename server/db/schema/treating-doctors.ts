@@ -1,4 +1,4 @@
-import { pgTable, uuid, integer, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { registrations } from './registrations';
 import { doctors } from './doctors';
 
@@ -7,6 +7,7 @@ export const treatingDoctors = pgTable('treating_doctors', {
     registrationId: uuid('registration_id').references(() => registrations.id).notNull(),
     doctorId: uuid('doctor_id').references(() => doctors.id).notNull(),
     doctorSequence: integer('doctor_sequence').notNull(),
+    isMain: boolean('is_main').default(false).notNull(),
     assignedAt: timestamp('assigned_at').defaultNow().notNull(),
 });
 

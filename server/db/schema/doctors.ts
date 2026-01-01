@@ -1,8 +1,10 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+import { organizations } from './organizations';
 
 export const doctors = pgTable('doctors', {
     id: uuid('id').defaultRandom().primaryKey(),
-    doctorId: varchar('doctor_id', { length: 50 }).unique().notNull(),
+    organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+    doctorId: varchar('doctor_id', { length: 50 }).notNull(),
     nickName: varchar('nick_name', { length: 100 }),
     fullName: varchar('full_name', { length: 255 }).notNull(),
     address: text('address'),
@@ -11,7 +13,10 @@ export const doctors = pgTable('doctors', {
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+    index('doctors_org_idx').on(table.organizationId),
+]);
 
 export type Doctor = typeof doctors.$inferSelect;
 export type NewDoctor = typeof doctors.$inferInsert;
+

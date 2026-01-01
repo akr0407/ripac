@@ -1,22 +1,27 @@
 import { db } from '../../db';
 import { doctors } from '../../db/schema';
-import { desc } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-export default defineEventHandler(async () => {
-    try {
-        const allDoctors = await db
-            .select()
-            .from(doctors)
-            .orderBy(desc(doctors.createdAt));
+export default defineEventHandler(async (event) => {
+    const session = await getUserSession(event);
 
-        return {
-            success: true,
-            data: allDoctors,
-        };
-    } catch (error) {
+    if (!session?.user) {
         throw createError({
-            statusCode: 500,
-            statusMessage: 'Failed to fetch doctors',
+            statusCode: 401,
+            message: 'Not authenticated',
         });
     }
+
+    const orgId = session.user.currentOrganizationId;
+
+    if (!orgId) {
+        throw createError({
+            statusCode: 400,
+            message: 'No organization selected',
+        });
+    }
+
+    const data = await db.select().from(doctors).where(eq(doctors.organizationId, orgId));
+
+    return { data };
 });

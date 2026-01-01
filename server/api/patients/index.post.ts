@@ -3,7 +3,7 @@ import { patients } from '../../db/schema';
 import { z } from 'zod';
 
 const createPatientSchema = z.object({
-    registrationNumber: z.string().min(1, 'Registration number is required'),
+    registrationNumber: z.string().optional(),
     mrNumber: z.string().optional(),
     fullName: z.string().min(1, 'Full name is required'),
     phone: z.string().optional(),
@@ -18,6 +18,17 @@ const createPatientSchema = z.object({
 
 export default defineEventHandler(async (event) => {
     try {
+        // Get the user session and organization
+        const session = await requireUserSession(event);
+        const organizationId = session.user.currentOrganizationId;
+
+        if (!organizationId) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'No organization selected',
+            });
+        }
+
         const body = await readBody(event);
         const validatedData = createPatientSchema.parse(body);
 
@@ -25,6 +36,7 @@ export default defineEventHandler(async (event) => {
             .insert(patients)
             .values({
                 ...validatedData,
+                organizationId,
                 admissionDate: validatedData.admissionDate || null,
             })
             .returning();
@@ -41,6 +53,11 @@ export default defineEventHandler(async (event) => {
                 data: error.errors,
             });
         }
+        // Re-throw if it's already a createError
+        if ((error as any).statusCode) {
+            throw error;
+        }
+        console.error('Patient creation error:', error);
         throw createError({
             statusCode: 500,
             statusMessage: 'Failed to create patient',

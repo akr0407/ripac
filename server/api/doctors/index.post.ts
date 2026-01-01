@@ -14,12 +14,26 @@ const createDoctorSchema = z.object({
 
 export default defineEventHandler(async (event) => {
     try {
+        // Get the user session and organization
+        const session = await requireUserSession(event);
+        const organizationId = session.user.currentOrganizationId;
+
+        if (!organizationId) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'No organization selected',
+            });
+        }
+
         const body = await readBody(event);
         const validatedData = createDoctorSchema.parse(body);
 
         const [newDoctor] = await db
             .insert(doctors)
-            .values(validatedData)
+            .values({
+                ...validatedData,
+                organizationId,
+            })
             .returning();
 
         return {
@@ -34,6 +48,11 @@ export default defineEventHandler(async (event) => {
                 data: error.errors,
             });
         }
+        // Re-throw if it's already a createError
+        if ((error as any).statusCode) {
+            throw error;
+        }
+        console.error('Doctor creation error:', error);
         throw createError({
             statusCode: 500,
             statusMessage: 'Failed to create doctor',

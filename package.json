@@ -13,14 +13,20 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:drop": "drizzle-kit drop",
-    "db:setup": "drizzle-kit generate && drizzle-kit migrate"
+    "db:setup": "drizzle-kit generate && drizzle-kit migrate",
+    "db:seed": "npx tsx server/db/seed.ts"
   },
   "dependencies": {
     "@vueuse/core": "^14.1.0",
     "dayjs": "^1.11.19",
+    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "lucide-vue-next": "^0.562.0",
+    "nspell": "^2.1.5",
     "nuxt": "^4.2.2",
+    "nuxt-auth-utils": "^0.5.26",
     "postgres": "^3.4.7",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4",

@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
                 doctorId: treatingDoctors.doctorId,
                 doctorSequence: treatingDoctors.doctorSequence,
                 assignedAt: treatingDoctors.assignedAt,
+                isMain: treatingDoctors.isMain,
                 doctorName: doctors.fullName,
             })
             .from(treatingDoctors)

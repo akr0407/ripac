@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', 'nuxt-auth-utils'],
 
   tailwindcss: {
     cssPath: '~/assets/css/main.css',
@@ -19,4 +19,23 @@ export default defineNuxtConfig({
       ],
     },
   },
+
+  runtimeConfig: {
+    // SSO Configuration (server-side only)
+    sso: {
+      clientId: process.env.SSO_CLIENT_ID || '',
+      clientSecret: process.env.SSO_CLIENT_SECRET || '',
+      issuerUrl: process.env.SSO_ISSUER_URL || '',
+      redirectUri: process.env.SSO_REDIRECT_URI || 'http://localhost:3000/api/auth/sso/callback',
+    },
+    // Session secret
+    session: {
+      password: process.env.NUXT_SESSION_PASSWORD || 'your-super-secret-session-password-min-32-chars',
+    },
+    public: {
+      // Public SSO config (for client-side)
+      ssoEnabled: !!process.env.SSO_CLIENT_ID,
+    },
+  },
 });
+

@@ -1,4 +1,11 @@
 // Re-export all schemas
+// Auth & Multi-tenancy
+export * from './users';
+export * from './organizations';
+export * from './memberships';
+export * from './audit-logs';
+
+// Business domain
 export * from './doctors';
 export * from './patients';
 export * from './registrations';

@@ -1,33 +1,39 @@
 import { db } from '../../db';
 import { registrations, patients } from '../../db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
-    try {
-        const result = await db
-            .select({
-                id: registrations.id,
-                registrationNumber: registrations.registrationNumber,
-                admissionDate: registrations.admissionDate,
-                dischargeDate: registrations.dischargeDate,
-                ward: registrations.ward,
-                createdAt: registrations.createdAt,
-                patientId: registrations.patientId,
-                patientName: patients.fullName,
-                patientMrNumber: patients.mrNumber,
-            })
-            .from(registrations)
-            .leftJoin(patients, eq(registrations.patientId, patients.id))
-            .orderBy(desc(registrations.createdAt));
+    const session = await getUserSession(event);
 
-        return {
-            success: true,
-            data: result,
-        };
-    } catch (error) {
+    if (!session?.user) {
         throw createError({
-            statusCode: 500,
-            statusMessage: 'Failed to fetch registrations',
+            statusCode: 401,
+            message: 'Not authenticated',
         });
     }
+
+    const orgId = session.user.currentOrganizationId;
+
+    if (!orgId) {
+        throw createError({
+            statusCode: 400,
+            message: 'No organization selected',
+        });
+    }
+
+    const data = await db
+        .select({
+            id: registrations.id,
+            patientId: registrations.patientId,
+            patientName: patients.fullName,
+            patientMrNumber: patients.mrNumber,
+            registrationNumber: registrations.registrationNumber,
+            admissionDate: registrations.admissionDate,
+            createdAt: registrations.createdAt,
+        })
+        .from(registrations)
+        .leftJoin(patients, eq(registrations.patientId, patients.id))
+        .where(eq(registrations.organizationId, orgId));
+
+    return { data };
 });

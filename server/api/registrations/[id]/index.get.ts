@@ -1,5 +1,5 @@
 import { db } from '../../../db';
-import { registrations, patients } from '../../../db/schema';
+import { registrations, patients, organizations } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
@@ -33,9 +33,15 @@ export default defineEventHandler(async (event) => {
                     nationality: patients.nationality,
                     currentAddress: patients.currentAddress,
                 },
+                organization: {
+                    name: organizations.name,
+                    logo: organizations.logo,
+                    address: organizations.address
+                }
             })
             .from(registrations)
             .leftJoin(patients, eq(registrations.patientId, patients.id))
+            .leftJoin(organizations, eq(registrations.organizationId, organizations.id))
             .where(eq(registrations.id, id));
 
         if (!registration) {
