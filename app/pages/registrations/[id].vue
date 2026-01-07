@@ -81,6 +81,15 @@
                   <input v-model="registration.admissionDate" type="date" class="input input-bordered" />
                 </div>
                 <div class="form-control">
+                  <label class="label"><span class="label-text">Manager on Duty</span></label>
+                  <select v-model="registration.managerOnDutyId" class="select select-bordered w-full">
+                    <option :value="null">Select Manager</option>
+                    <option v-for="opt in doctorOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="form-control">
                   <label class="label"><span class="label-text">Discharge Date</span></label>
                   <input v-model="registration.dischargeDate" type="date" class="input input-bordered" />
                 </div>
@@ -557,7 +566,8 @@ async function saveCurrentStep() {
           body: { 
             ward: registration.value.ward, 
             admissionDate: registration.value.admissionDate, 
-            dischargeDate: registration.value.dischargeDate 
+            dischargeDate: registration.value.dischargeDate,
+            managerOnDutyId: registration.value.managerOnDutyId
           } 
         });
         break;
@@ -630,7 +640,7 @@ async function handleSaveAll() {
   saving.value = true;
   try {
     await Promise.all([
-      $fetch(`/api/registrations/${registrationId}`, { method: 'PUT', body: { ward: registration.value.ward, admissionDate: registration.value.admissionDate, dischargeDate: registration.value.dischargeDate } }),
+      $fetch(`/api/registrations/${registrationId}`, { method: 'PUT', body: { ward: registration.value.ward, admissionDate: registration.value.admissionDate, dischargeDate: registration.value.dischargeDate, managerOnDutyId: registration.value.managerOnDutyId } }),
       $fetch(`/api/registrations/${registrationId}/history`, { method: 'POST', body: medicalHistory.value }),
       $fetch(`/api/registrations/${registrationId}/vitals`, { method: 'POST', body: vitalSigns.value }),
       $fetch(`/api/registrations/${registrationId}/examinations`, { method: 'POST', body: examination.value }),
@@ -927,38 +937,48 @@ async function downloadPDF(preview = false) {
     }
 
     // Footer / Signatures
-    y = y + 15; 
     
-    if (y > 250) { 
+    // Check if enough space for signatures (approx 60 units need)
+    if (y + 60 > 280) { 
         doc.addPage(); 
         y = 30; 
+    } else {
+        y += 20; // Extra margin as requested
     }
-
-    const sigY = y;
+    
+    const sigY = y; 
     doc.setLineWidth(0.5);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     
-    doc.line(margin + 20, sigY, margin + 80, sigY); 
-    doc.text("Patient / Family Signature", margin + 30, sigY + 5);
+    // Patient Signature (Left)
+    doc.line(margin + 10, sigY + 20, margin + 70, sigY + 20); 
+    doc.text("Patient / Family Signature", margin + 20, sigY + 25);
 
-    doc.line(pageWidth - 80, sigY, pageWidth - 20, sigY); 
+    // Manager on Duty Signature (Right)
+    const managerName = registration.value?.managerOnDuty ? 
+        (registration.value.managerOnDuty.fullName || registration.value.managerOnDuty.nickName || 'Unknown') : 
+        '______________________';
     
-    // Use Main Doctor for signature line, or first one, or default
-    const mainDoc = docs.find(d => d.isMain) || docs[0];
-    const sigLabel = mainDoc ? mainDoc.name : "Treating Doctor Signature";
+    doc.setFont("helvetica", "bold");
+    doc.text("ON BEHALF of TREATING DOCTOR", pageWidth - margin - 10, sigY, { align: 'right' });
     
-    // Center the text under the line
-    const textWidth = doc.getTextWidth(sigLabel || '');
-    const lineCenter = (pageWidth - 80) + ((pageWidth - 20) - (pageWidth - 80)) / 2;
-    // doc.text aligns to start by default
-    doc.text(sigLabel || "Treating Doctor", lineCenter, sigY + 5, { align: 'center' });
+    // Signature Line
+    doc.line(pageWidth - margin - 70, sigY + 20, pageWidth - margin - 10, sigY + 20);
+    
+    // Name and Title
+    doc.setFont("helvetica", "normal");
+    doc.text(managerName, pageWidth - margin - 10, sigY + 25, { align: 'right' });
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("(Manager on Duty)", pageWidth - margin - 10, sigY + 30, { align: 'right' });
     
     // Page Number
     const pageCount = doc.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
         doc.text(
            `Printed on ${dayjs().format('DD MMM YYYY HH:mm')} | ${val(org?.name) || 'RIPAC HIS'} | Page ${i} of ${pageCount}`,
            pageWidth / 2,

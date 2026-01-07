@@ -33,30 +33,46 @@
             </div>
             <div class="form-control">
               <label class="label"><span class="label-text">MR Number</span></label>
-              <input v-model="form.mrNumber" type="text" class="input input-bordered" placeholder="Auto-generated if empty" />
+              <input 
+                :value="form.mrNumber" 
+                @input="handleMrNumberInput" 
+                type="text" 
+                class="input input-bordered" 
+                maxlength="11"
+                placeholder="00-00-00-01" 
+              />
             </div>
             <div class="form-control">
               <label class="label"><span class="label-text">Phone</span></label>
               <input v-model="form.phone" type="text" class="input input-bordered" />
             </div>
-            <div class="form-control">
+            <div class="form-control" ref="nationalityDropdownRef">
               <label class="label"><span class="label-text">Nationality</span></label>
-              <select v-model="form.nationality" class="select select-bordered">
-                <option value="" disabled>Select Nationality</option>
-                <option value="Indonesia">Indonesia</option>
-                <option value="Malaysia">Malaysia</option>
-                <option value="Singapore">Singapore</option>
-                <option value="Philippines">Philippines</option>
-                <option value="Thailand">Thailand</option>
-                <option value="Vietnam">Vietnam</option>
-                <option value="China">China</option>
-                <option value="Japan">Japan</option>
-                <option value="South Korea">South Korea</option>
-                <option value="Australia">Australia</option>
-                <option value="USA">USA</option>
-                <option value="UK">UK</option>
-                <option value="Other">Other</option>
-              </select>
+              <div class="dropdown w-full" :class="{ 'dropdown-open': isNationalityOpen }">
+                <input 
+                  type="text" 
+                  v-model="form.nationality"
+                  @focus="isNationalityOpen = true"
+                  @input="isNationalityOpen = true"
+                  placeholder="Search nationality..." 
+                  class="input input-bordered w-full" 
+                />
+                <div v-show="isNationalityOpen" class="dropdown-content card card-compact w-full shadow bg-base-100 max-h-60 overflow-y-auto z-[1] mt-1">
+                  <div class="card-body p-2">
+                    <ul class="menu menu-sm w-full p-0">
+                      <li v-for="country in filteredNationalities" :key="country.Country">
+                        <a @click.prevent="selectNationality(country.Country)">
+                          {{ country.Country }} 
+                          <span class="text-xs opacity-50">- {{ country.Nationality }} ({{ country.Code }})</span>
+                        </a>
+                      </li>
+                      <li v-if="filteredNationalities.length === 0" class="disabled">
+                        <a>No results found</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="form-control">
               <label class="label"><span class="label-text">Age</span></label>
@@ -110,8 +126,53 @@
 <script setup lang="ts">
 import { Save } from 'lucide-vue-next';
 import dayjs from 'dayjs';
+import CountryList from '../../../docs/CountryList.json';
+import { onClickOutside } from '@vueuse/core';
 
 const loading = ref(false);
+const nationalityDropdownRef = ref(null);
+const isNationalityOpen = ref(false);
+
+// Sort countries alphabetically
+const sortedCountries = [...CountryList].sort((a, b) => a.Nationality.localeCompare(b.Nationality));
+
+const filteredNationalities = computed(() => {
+  if (!form.value.nationality) return sortedCountries;
+  const query = form.value.nationality.toLowerCase();
+  return sortedCountries.filter(c => 
+    c.Nationality.toLowerCase().includes(query) || 
+    c.Country.toLowerCase().includes(query)
+  );
+});
+
+onClickOutside(nationalityDropdownRef, () => {
+  isNationalityOpen.value = false;
+});
+
+function selectNationality(val: string) {
+  form.value.nationality = val;
+  isNationalityOpen.value = false;
+}
+
+function handleMrNumberInput(event: Event) {
+  const input = event.target as HTMLInputElement;
+  let value = input.value.replace(/\D/g, '').substring(0, 8); // Remove non-digits and limit to 8
+  
+  // Format as 00-00-00-01
+  if (value.length > 6) {
+    value = `${value.slice(0, 2)}-${value.slice(2, 4)}-${value.slice(4, 6)}-${value.slice(6)}`;
+  } else if (value.length > 4) {
+    value = `${value.slice(0, 2)}-${value.slice(2, 4)}-${value.slice(4)}`;
+  } else if (value.length > 2) {
+    value = `${value.slice(0, 2)}-${value.slice(2)}`;
+  }
+  
+  form.value.mrNumber = value;
+  // Force update input value if it didn't change (e.g. invalid char typed)
+  if (input.value !== value) {
+    input.value = value;
+  }
+}
 
 const form = ref({
   fullName: '',

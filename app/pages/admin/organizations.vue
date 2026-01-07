@@ -102,6 +102,10 @@
                          <!-- Logo Upload -->
                         <div class="form-control">
                             <label class="label pl-0"><span class="label-text font-medium">Logo</span></label>
+                             <div v-if="formData.logo" class="mb-4 p-4 border border-base-200 rounded-lg bg-base-50/50 flex justify-center">
+                                <img :src="formData.logo" class="max-w-full h-auto max-h-32 object-contain shadow-sm rounded" />
+                             </div>
+                             
                              <div class="flex items-center gap-4">
                                 <div class="avatar placeholder">
                                     <div class="bg-neutral text-neutral-content rounded w-12 h-12">
@@ -109,15 +113,32 @@
                                          <span v-else>Logo</span>
                                     </div>
                                 </div>
-                                <input type="file" accept="image/*" class="file-input file-input-bordered w-full max-w-xs" @change="handleFileUpload" />
+                                <input type="file" accept="image/*" class="file-input file-input-bordered w-full" @change="handleFileUpload" />
                              </div>
                         </div>
 
-                         <!-- Address -->
+                        <!-- Address -->
                         <div class="form-control">
                             <label class="label pl-0"><span class="label-text font-medium">Address</span></label>
                             <textarea v-model="formData.address" class="textarea textarea-bordered h-20" placeholder="Full Address"></textarea>
                         </div>
+
+                         <!-- Contact Info -->
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label pl-0"><span class="label-text font-medium">Phone</span></label>
+                                <input v-model="formData.phone" type="text" class="input input-bordered h-10" placeholder="+62..." />
+                            </div>
+                            <div class="form-control">
+                                <label class="label pl-0"><span class="label-text font-medium">Fax</span></label>
+                                <input v-model="formData.fax" type="text" class="input input-bordered h-10" placeholder="+62..." />
+                            </div>
+                         </div>
+                         
+                         <div class="form-control">
+                            <label class="label pl-0"><span class="label-text font-medium">Email</span></label>
+                            <input v-model="formData.email" type="email" class="input input-bordered h-10" placeholder="contact@example.com" />
+                         </div>
                         
                         <!-- Description -->
                         <div class="form-control">
@@ -169,6 +190,9 @@ interface Organization {
     createdAt: string;
     logo?: string | null;
     address?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    fax?: string | null;
 }
 
 const organizations = ref<Organization[]>([]);
@@ -185,6 +209,9 @@ const formData = ref({
     description: '',
     logo: '',
     address: '',
+    phone: '',
+    email: '',
+    fax: '',
     isActive: true
 });
 
@@ -201,7 +228,9 @@ async function fetchOrganizations() {
 // Open modal for create
 function openCreateModal() {
     isEditing.value = false;
-    formData.value = { id: '', name: '', slug: '', description: '', logo: '', address: '', isActive: true };
+    isEditing.value = false;
+    formData.value = { id: '', name: '', slug: '', description: '', logo: '', address: '', phone: '', email: '', fax: '', isActive: true };
+    error.value = '';
     error.value = '';
     showModal.value = true;
 }
@@ -216,6 +245,9 @@ function openEditModal(org: Organization) {
         description: org.description || '', 
         logo: org.logo || '',
         address: org.address || '',
+        phone: org.phone || '',
+        email: org.email || '',
+        fax: org.fax || '',
         isActive: org.isActive
     };
     error.value = '';

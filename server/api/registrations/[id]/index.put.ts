@@ -7,6 +7,7 @@ const updateRegistrationSchema = z.object({
     ward: z.string().optional(),
     admissionDate: z.string().optional().nullable(),
     dischargeDate: z.string().optional().nullable(),
+    managerOnDutyId: z.string().optional().nullable(),
 });
 
 export default defineEventHandler(async (event) => {

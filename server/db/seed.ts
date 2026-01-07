@@ -26,15 +26,27 @@ async function seed() {
             name: 'RSIA',
             slug: 'rsia',
             description: 'RSIA Hospital',
-            settings: { timezone: 'Asia/Jakarta' },
+            settings: { timezone: 'Asia/Makassar' },
         }).onConflictDoNothing().returning();
 
         const [brosOrg] = await db.insert(organizations).values({
             name: 'BROS',
             slug: 'bros',
             description: 'BROS Medical Center',
-            settings: { timezone: 'Asia/Jakarta' },
-        }).onConflictDoNothing().returning();
+            address: 'Jl. Letda Tantular No. 6 Denpasar, Bali',
+            phone: '+ 62 361 247 499, +62 361 222 588(Hunting)',
+            fax: '+62 361 22605',
+            email: 'info@baliroyalhospital.co.id',
+            settings: { timezone: 'Asia/Makassar' },
+        }).onConflictDoUpdate({
+            target: organizations.slug,
+            set: {
+                address: 'Jl. Letda Tantular No. 6 Denpasar, Bali',
+                phone: '+ 62 361 247 499, +62 361 222 588(Hunting)',
+                fax: '+62 361 22605',
+                email: 'info@baliroyalhospital.co.id',
+            }
+        }).returning();
 
         console.log('✅ Organizations created:', rsiaOrg?.slug || 'rsia (exists)', brosOrg?.slug || 'bros (exists)');
 
@@ -101,6 +113,7 @@ async function seed() {
         console.log('👥 Creating sample users for RSIA...');
 
         const rsiaUsers = [
+            { email: 'rsia@ripac.local', name: 'RSIA Owner', role: 'owner' as const },
             { email: 'dokter.ani@rsia.local', name: 'Dr. Ani Wijaya', role: 'admin' as const },
             { email: 'dokter.budi@rsia.local', name: 'Dr. Budi Santoso', role: 'member' as const },
             { email: 'nurse.citra@rsia.local', name: 'Citra Dewi', role: 'member' as const },
@@ -130,6 +143,7 @@ async function seed() {
         console.log('👥 Creating sample users for BROS...');
 
         const brosUsers = [
+            { email: 'bros@ripac.local', name: 'BROS Owner', role: 'owner' as const },
             { email: 'dokter.dian@bros.local', name: 'Dr. Dian Pratama', role: 'admin' as const },
             { email: 'dokter.eko@bros.local', name: 'Dr. Eko Susanto', role: 'member' as const },
             { email: 'admin.fira@bros.local', name: 'Fira Hastuti', role: 'member' as const },
@@ -162,8 +176,8 @@ async function seed() {
         console.log('  Password: admin123');
         console.log('');
         console.log('Sample users (password: password123):');
-        console.log('  RSIA: dokter.ani@rsia.local, dokter.budi@rsia.local, nurse.citra@rsia.local');
-        console.log('  BROS: dokter.dian@bros.local, dokter.eko@bros.local, admin.fira@bros.local');
+        console.log('  RSIA: rsia@ripac.local, dokter.ani@rsia.local, dokter.budi@rsia.local, nurse.citra@rsia.local');
+        console.log('  BROS: bros@ripac.local, dokter.dian@bros.local, dokter.eko@bros.local, admin.fira@bros.local');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     } catch (error) {

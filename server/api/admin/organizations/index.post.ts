@@ -7,6 +7,11 @@ const createOrgSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
     description: z.string().optional(),
+    avatar: z.string().optional(),
+    address: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email('Invalid email').optional().or(z.literal('')),
+    fax: z.string().optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -38,7 +43,7 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const { name, slug, description } = result.data;
+    const { name, slug, description, address, phone, email, fax } = result.data;
 
     // Check if slug is already taken
     const existingOrg = await db.query.organizations.findFirst({
@@ -57,6 +62,10 @@ export default defineEventHandler(async (event) => {
         name,
         slug,
         description,
+        address,
+        phone,
+        email: email || null,
+        fax,
         settings: { timezone: 'Asia/Jakarta' },
     }).returning();
 
