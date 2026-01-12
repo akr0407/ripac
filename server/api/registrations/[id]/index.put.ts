@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const updateRegistrationSchema = z.object({
-    ward: z.string().optional(),
+    ward: z.string().optional().nullable(),
     admissionDate: z.string().optional().nullable(),
     dischargeDate: z.string().optional().nullable(),
     managerOnDutyId: z.string().optional().nullable(),

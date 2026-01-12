@@ -44,14 +44,37 @@ export default defineEventHandler(async (event) => {
         });
     }
 
+
     // Verify password
     const isValid = await verifyPasswordLocal(password, user.passwordHash);
+
     if (!isValid) {
+        try {
+            const fs = await import('fs');
+            const path = await import('path');
+            const logPath = path.resolve(process.cwd(), 'server-debug.log');
+            const inputHash = await import('../../utils/auth').then(m => m.hashPasswordLocal(password));
+
+            const logMessage = `
+[${new Date().toISOString()}] Login Failed:
+Email: ${email}
+Input Length: ${password.length}
+Stored Hash: ${user.passwordHash}
+Input Hash:  ${inputHash}
+Input Password: ${password.substring(0, 1) + '***' + password.substring(password.length - 1)}
+----------------------------------------
+`;
+            fs.appendFileSync(logPath, logMessage);
+        } catch (e) {
+            console.error('Failed to write debug log', e);
+        }
+
         throw createError({
             statusCode: 401,
             message: 'Invalid email or password',
         });
     }
+
 
     // Check if user is active
     if (!user.isActive) {

@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
                 admissionDate: registrations.admissionDate,
                 dischargeDate: registrations.dischargeDate,
                 ward: registrations.ward,
+                managerOnDutyId: registrations.managerOnDutyId,
                 createdAt: registrations.createdAt,
                 patientId: registrations.patientId,
                 patient: {

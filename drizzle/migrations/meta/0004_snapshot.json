@@ -1,5 +1,5 @@
 {
-  "id": "66160da2-08d9-4dd8-8dba-68f93b17e77e",
+  "id": "dcab2570-b44d-45ef-b347-9d975458de15",
   "prevId": "3a9e1e93-8356-40a4-895b-0a5f3aeb624d",
   "version": "7",
   "dialect": "postgresql",
@@ -167,7 +167,7 @@
         },
         "phone": {
           "name": "phone",
-          "type": "varchar(50)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
@@ -801,6 +801,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "manager_on_duty_id": {
+          "name": "manager_on_duty_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -853,6 +859,19 @@
           "tableTo": "patients",
           "columnsFrom": [
             "patient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "registrations_manager_on_duty_id_doctors_id_fk": {
+          "name": "registrations_manager_on_duty_id_doctors_id_fk",
+          "tableFrom": "registrations",
+          "tableTo": "doctors",
+          "columnsFrom": [
+            "manager_on_duty_id"
           ],
           "columnsTo": [
             "id"
