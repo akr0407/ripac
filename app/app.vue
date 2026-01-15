@@ -2,6 +2,8 @@
   <div :data-theme="theme">
     <NuxtLayout>
       <NuxtPage />
+      <ToastContainer />
+      <ConfirmDialog />
     </NuxtLayout>
   </div>
 </template>

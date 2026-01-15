@@ -81,13 +81,12 @@
                   <input v-model="registration.admissionDate" type="date" class="input input-bordered" />
                 </div>
                 <div class="form-control">
-                  <label class="label"><span class="label-text">Manager on Duty</span></label>
-                  <select v-model="registration.managerOnDutyId" class="select select-bordered w-full">
-                    <option :value="null">Select Manager</option>
-                    <option v-for="opt in doctorOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <DoctorSelect 
+                    v-model="registration.managerOnDutyId" 
+                    :options="doctorOptions" 
+                    label="Manager on Duty" 
+                    placeholder="Select Manager" 
+                  />
                 </div>
                 <div class="form-control">
                   <label class="label"><span class="label-text">Discharge Date</span></label>
@@ -319,13 +318,12 @@
                 <div v-for="(doc, index) in treatingDoctors" :key="index" class="form-control p-4 border rounded-lg bg-base-100">
                   <div class="flex items-center gap-4">
                     <div class="flex-1">
-                        <label class="label"><span class="label-text">Doctor {{ index + 1 }}</span></label>
-                        <select v-model="treatingDoctors[index].id" class="select select-bordered w-full">
-                            <option :value="null">Select doctor</option>
-                            <option v-for="opt in doctorOptions" :key="opt.value" :value="opt.value">
-                            {{ opt.label }}
-                            </option>
-                        </select>
+                        <DoctorSelect 
+                            v-model="treatingDoctors[index].id" 
+                            :options="doctorOptions" 
+                            :label="`Doctor ${index + 1}`"
+                            placeholder="Select doctor"
+                        />
                     </div>
                     <!-- Main doctor selector hidden as it is always Doctor 1 -->
                     <!-- <div class="form-control" v-if="treatingDoctors[index].id">
@@ -617,7 +615,7 @@ async function fetchComments() {
 
 async function fetchDoctors() {
   try {
-    const response = await $fetch<{ data: any[] }>('/api/doctors');
+    const response = await $fetch<{ data: any[] }>('/api/doctors?limit=1000');
     doctorOptions.value = response.data.map((d: any) => ({ label: d.fullName, value: d.id }));
   } catch (e) {}
 }
@@ -856,7 +854,7 @@ async function downloadPDF(preview = false) {
     doc.text(splitAddr, pageWidth / 2, y, { align: "center" });
     y += (splitAddr.length * 5);
     
-    doc.text("Phone: (123) 456-7890 | Email: info@ripachospital.com", pageWidth / 2, y, { align: "center" });
+    doc.text(`Phone: ${val(org?.phone)} | Email: ${val(org?.email)}`, pageWidth / 2, y, { align: "center" });
 
     y += 8;
     doc.setFont("helvetica", "bold");

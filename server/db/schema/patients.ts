@@ -9,6 +9,7 @@ export const patients = pgTable('patients', {
     id: uuid('id').defaultRandom().primaryKey(),
     organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
     mrNumber: varchar('mr_number', { length: 50 }),
+    externalRegistrationNo: varchar('external_registration_no', { length: 100 }), // Reference to hospital registration
     fullName: varchar('full_name', { length: 255 }).notNull(),
     phone: varchar('phone', { length: 20 }),
     age: integer('age'),

@@ -55,9 +55,7 @@
                                 <td class="text-sm">{{ new Date(org.createdAt).toLocaleDateString() }}</td>
                                 <td>
                                     <div class="join">
-                                        <NuxtLink :to="`/org/${org.slug}`" class="btn btn-ghost btn-xs join-item" title="View">
-                                            View
-                                        </NuxtLink>
+
                                         <button class="btn btn-ghost btn-xs join-item text-warning" @click="openEditModal(org)" title="Edit">
                                             <Edit class="w-3 h-3" />
                                         </button>
@@ -146,6 +144,25 @@
                             <textarea v-model="formData.description" class="textarea textarea-bordered h-16" placeholder="Brief description"></textarea>
                         </div>
 
+                        <!-- Hospital API Integration -->
+                        <div class="divider text-xs text-base-content/50">Hospital API Integration</div>
+                        
+                        <div class="form-control">
+                            <label class="cursor-pointer label justify-start gap-4">
+                                <span class="label-text font-medium">Enable Hospital API</span>
+                                <input type="checkbox" v-model="formData.hospitalApiEnabled" class="toggle toggle-primary" />
+                            </label>
+                            <span class="label-text-alt text-base-content/50 ml-1">Enable integration with external hospital API</span>
+                        </div>
+                        
+                        <div v-if="formData.hospitalApiEnabled" class="form-control">
+                            <label class="label pl-0">
+                                <span class="label-text font-medium">Hospital API Base URL</span>
+                            </label>
+                            <input v-model="formData.hospitalApiBaseUrl" type="text" class="input input-bordered h-10" placeholder="http://10.10.10.99:3020/api" />
+                            <span class="label-text-alt text-base-content/50 mt-1">Base URL of the hospital API (e.g., http://10.10.10.99:3020/api)</span>
+                        </div>
+
                          <!-- Is Active -->
                          <div class="form-control">
                             <label class="cursor-pointer label justify-start gap-4">
@@ -193,6 +210,13 @@ interface Organization {
     phone?: string | null;
     email?: string | null;
     fax?: string | null;
+    settings?: {
+        hospitalApi?: {
+            enabled: boolean;
+            baseUrl: string;
+        };
+        [key: string]: unknown;
+    };
 }
 
 const organizations = ref<Organization[]>([]);
@@ -212,7 +236,9 @@ const formData = ref({
     phone: '',
     email: '',
     fax: '',
-    isActive: true
+    isActive: true,
+    hospitalApiEnabled: false,
+    hospitalApiBaseUrl: ''
 });
 
 // Fetch organizations
@@ -228,9 +254,11 @@ async function fetchOrganizations() {
 // Open modal for create
 function openCreateModal() {
     isEditing.value = false;
-    isEditing.value = false;
-    formData.value = { id: '', name: '', slug: '', description: '', logo: '', address: '', phone: '', email: '', fax: '', isActive: true };
-    error.value = '';
+    formData.value = { 
+        id: '', name: '', slug: '', description: '', logo: '', 
+        address: '', phone: '', email: '', fax: '', isActive: true,
+        hospitalApiEnabled: false, hospitalApiBaseUrl: ''
+    };
     error.value = '';
     showModal.value = true;
 }
@@ -248,7 +276,9 @@ function openEditModal(org: Organization) {
         phone: org.phone || '',
         email: org.email || '',
         fax: org.fax || '',
-        isActive: org.isActive
+        isActive: org.isActive,
+        hospitalApiEnabled: org.settings?.hospitalApi?.enabled || false,
+        hospitalApiBaseUrl: org.settings?.hospitalApi?.baseUrl || ''
     };
     error.value = '';
     showModal.value = true;

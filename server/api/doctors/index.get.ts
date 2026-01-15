@@ -1,6 +1,6 @@
 import { db } from '../../db';
 import { doctors } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, like, ilike, or, count, and } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
     const session = await getUserSession(event);
@@ -21,7 +21,46 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const data = await db.select().from(doctors).where(eq(doctors.organizationId, orgId));
+    // Get query parameters
+    const query = getQuery(event);
+    const page = parseInt(query.page as string) || 1;
+    const limit = parseInt(query.limit as string) || 10;
+    const search = (query.q as string) || '';
 
-    return { data };
+    const offset = (page - 1) * limit;
+
+    // Build where condition
+    const whereCondition = and(
+        eq(doctors.organizationId, orgId),
+        search ? or(
+            ilike(doctors.fullName, `%${search}%`),
+            ilike(doctors.doctorId, `%${search}%`),
+            ilike(doctors.nickName, `%${search}%`)
+        ) : undefined
+    );
+
+    // Get total count
+    const [totalResult] = await db
+        .select({ count: count() })
+        .from(doctors)
+        .where(whereCondition);
+
+    const total = totalResult?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    // Get data
+    const data = await db
+        .select()
+        .from(doctors)
+        .where(whereCondition)
+        .limit(limit)
+        .offset(offset);
+
+    return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages
+    };
 });

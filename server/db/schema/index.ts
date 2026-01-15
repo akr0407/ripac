@@ -15,3 +15,4 @@ export * from './examinations';
 export * from './recommendations';
 export * from './treating-doctors';
 export * from './comments';
+export * from './countries';

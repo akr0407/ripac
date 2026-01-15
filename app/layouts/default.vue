@@ -149,6 +149,12 @@
               Registrations
             </NuxtLink>
           </li>
+          <li>
+            <NuxtLink to="/hospital-sync" :class="{ 'active !bg-primary/10 !text-primary': route.path.startsWith('/hospital-sync') }">
+              <RefreshCw class="w-5 h-5" />
+              Hospital Sync
+            </NuxtLink>
+          </li>
           
           <!-- Admin Panel - Superadmin Only -->
           <li v-if="user?.isSuperadmin" class="mt-4">
@@ -198,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { Home, Users, UserRound, UsersRound, Settings, Search, Menu, Sun, Moon, PanelLeftClose, PanelLeftOpen, Shield, ChevronDown, Building, ClipboardList } from 'lucide-vue-next';
+import { Home, Users, UserRound, UsersRound, Settings, Search, Menu, Sun, Moon, PanelLeftClose, PanelLeftOpen, Shield, ChevronDown, Building, ClipboardList, RefreshCw } from 'lucide-vue-next';
 
 const route = useRoute();
 const { isDark, toggleDark } = useTheme();
@@ -263,6 +269,7 @@ const breadcrumbs = computed(() => {
     if (part === 'doctors') label = 'Doctors';
     if (part === 'settings') label = 'Settings';
     if (part === 'registrations') label = 'Registrations';
+    if (part === 'hospital-sync') label = 'Hospital Sync';
     if (part === 'new') label = 'New Registration';
     
     // ID detection (simple heuristic)

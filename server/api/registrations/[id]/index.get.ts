@@ -37,7 +37,9 @@ export default defineEventHandler(async (event) => {
                 organization: {
                     name: organizations.name,
                     logo: organizations.logo,
-                    address: organizations.address
+                    address: organizations.address,
+                    phone: organizations.phone,
+                    email: organizations.email,
                 },
                 managerOnDuty: {
                     id: doctors.id,

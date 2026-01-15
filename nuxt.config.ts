@@ -29,6 +29,12 @@ export default defineNuxtConfig({
       redirectUri: process.env.SSO_REDIRECT_URI || 'http://localhost:3000/api/auth/sso/callback',
     },
 
+    // Hospital API Credentials (server-side only, URL configured per organization)
+    hospitalApi: {
+      username: process.env.HOSPITAL_API_USERNAME || '',
+      password: process.env.HOSPITAL_API_PASSWORD || '',
+    },
+
     // Session secret
     session: {
       password: process.env.NUXT_SESSION_PASSWORD || 'your-super-secret-session-password-min-32-chars',

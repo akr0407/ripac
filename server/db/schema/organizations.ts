@@ -16,6 +16,10 @@ export const organizations = pgTable('organizations', {
         theme?: string;
         timezone?: string;
         dateFormat?: string;
+        hospitalApi?: {
+            enabled: boolean;
+            baseUrl: string; // e.g., "http://10.10.10.99:3020/api"
+        };
         [key: string]: unknown;
     }>().default({}),
 

@@ -1,44 +1,33 @@
 import { db } from '../../db';
 import { doctors } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
-    try {
-        const id = getRouterParam(event, 'id');
-
-        if (!id) {
-            throw createError({
-                statusCode: 400,
-                statusMessage: 'Doctor ID is required',
-            });
-        }
-
-        // Soft delete - set isActive to false
-        const [deletedDoctor] = await db
-            .update(doctors)
-            .set({
-                isActive: false,
-                updatedAt: new Date(),
-            })
-            .where(eq(doctors.id, id))
-            .returning();
-
-        if (!deletedDoctor) {
-            throw createError({
-                statusCode: 404,
-                statusMessage: 'Doctor not found',
-            });
-        }
-
-        return {
-            success: true,
-            message: 'Doctor deleted successfully',
-        };
-    } catch (error) {
-        if ((error as any).statusCode) throw error;
-        throw createError({
-            statusCode: 500,
-            statusMessage: 'Failed to delete doctor',
-        });
+    const session = await getUserSession(event);
+    if (!session?.user) {
+        throw createError({ statusCode: 401, message: 'Not authenticated' });
     }
+
+    const orgId = session.user.currentOrganizationId;
+    if (!orgId) {
+        throw createError({ statusCode: 400, message: 'No organization selected' });
+    }
+
+    const id = event.context.params?.id;
+    if (!id) {
+        throw createError({ statusCode: 400, message: 'ID is required' });
+    }
+
+    const [deleted] = await db.delete(doctors)
+        .where(and(
+            eq(doctors.id, id),
+            eq(doctors.organizationId, orgId)
+        ))
+        .returning();
+
+    if (!deleted) {
+        throw createError({ statusCode: 404, message: 'Doctor not found' });
+    }
+
+    return { success: true, data: deleted };
 });

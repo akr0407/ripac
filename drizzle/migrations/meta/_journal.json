@@ -36,6 +36,20 @@
       "when": 1768184066117,
       "tag": "0004_nappy_marrow",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768441203717,
+      "tag": "0005_unusual_richard_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1768455580862,
+      "tag": "0006_noisy_sleeper",
+      "breakpoints": true
     }
   ]
 }

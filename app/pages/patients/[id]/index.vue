@@ -21,6 +21,10 @@
         </p>
       </div>
       <div>
+        <button class="btn btn-outline gap-2 mr-2" @click="openEditModal">
+          <Edit class="w-4 h-4" />
+          Edit
+        </button>
         <button class="btn btn-primary" @click="showAddRegistrationModal = true">
           <Plus class="w-5 h-5" />
           New Registration
@@ -98,29 +102,100 @@
     </div>
 
     <!-- New Registration Modal -->
-    <dialog class="modal" :class="{ 'modal-open': showAddRegistrationModal }">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">New Registration</h3>
-        <p class="mb-4">Create a new medical resume for {{ patient?.fullName }}?</p>
-        
-        <div class="form-control mb-4">
-          <label class="label"><span class="label-text">Ward (Optional)</span></label>
-          <input v-model="newRegWard" type="text" class="input input-bordered" placeholder="e.g. ICU, General Ward" />
-        </div>
+    <!-- New Registration Modal -->
+    <Teleport to="body">
+      <dialog class="modal" :class="{ 'modal-open': showAddRegistrationModal }">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg mb-4">New Registration</h3>
+          <p class="mb-4">Create a new medical resume for {{ patient?.fullName }}?</p>
+          
+          <div class="form-control mb-4">
+            <label class="label"><span class="label-text">Ward (Optional)</span></label>
+            <input v-model="newRegWard" type="text" class="input input-bordered" placeholder="e.g. ICU, General Ward" />
+          </div>
 
-        <div class="modal-action">
-          <button class="btn" @click="showAddRegistrationModal = false">Cancel</button>
-          <button class="btn btn-primary" @click="createRegistration" :disabled="creating">
-            {{ creating ? 'Creating...' : 'Create' }}
-          </button>
+          <div class="modal-action">
+            <button class="btn" @click="showAddRegistrationModal = false">Cancel</button>
+            <button class="btn btn-primary" @click="createRegistration" :disabled="creating">
+              {{ creating ? 'Creating...' : 'Create' }}
+            </button>
+          </div>
         </div>
-      </div>
-    </dialog>
+        <form method="dialog" class="modal-backdrop bg-base-300/50 backdrop-blur-sm">
+            <button @click="showAddRegistrationModal = false">close</button>
+        </form>
+      </dialog>
+    </Teleport>
+    <!-- Edit Patient Modal -->
+    <Teleport to="body">
+        <dialog class="modal" :class="{ 'modal-open': showEditModal }">
+        <div class="modal-box w-11/12 max-w-2xl bg-base-100 text-base-content">
+            <h3 class="font-bold text-lg mb-6">Edit Patient</h3>
+            
+            <form @submit.prevent="updatePatient" class="space-y-4">
+            <div class="form-control">
+                <label class="label"><span class="label-text">Full Name</span></label>
+                <input v-model="editForm.fullName" type="text" class="input input-bordered" required />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                <label class="label"><span class="label-text">MR Number</span></label>
+                <input v-model="editForm.mrNumber" type="text" class="input input-bordered" />
+                </div>
+                <div class="form-control">
+                <label class="label"><span class="label-text">Phone</span></label>
+                <input v-model="editForm.phone" type="text" class="input input-bordered" />
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                <label class="label"><span class="label-text">Age</span></label>
+                <div class="join">
+                    <input v-model.number="editForm.age" type="number" class="input input-bordered join-item w-full" />
+                    <select v-model="editForm.ageUnit" class="select select-bordered join-item">
+                    <option value="years">Years</option>
+                    <option value="months">Months</option>
+                    <option value="days">Days</option>
+                    </select>
+                </div>
+                </div>
+                <div class="form-control">
+                <label class="label"><span class="label-text">Sex</span></label>
+                <select v-model="editForm.sex" class="select select-bordered">
+                    <option value="">Select Sex</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+                </div>
+            </div>
+
+            <NationalitySelect v-model="editForm.nationality" />
+
+            <div class="form-control">
+                <label class="label"><span class="label-text">Current Address</span></label>
+                <textarea v-model="editForm.currentAddress" class="textarea textarea-bordered" rows="3"></textarea>
+            </div>
+
+            <div class="modal-action">
+                <button type="button" class="btn" @click="showEditModal = false">Cancel</button>
+                <button type="submit" class="btn btn-primary" :disabled="updating">
+                {{ updating ? 'Saving...' : 'Save Changes' }}
+                </button>
+            </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop bg-base-300/50 backdrop-blur-sm">
+            <button @click="showEditModal = false">close</button>
+        </form>
+        </dialog>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Plus } from 'lucide-vue-next';
+import { Plus, Edit } from 'lucide-vue-next';
 import dayjs from 'dayjs';
 
 const route = useRoute();
@@ -129,8 +204,21 @@ const patientId = route.params.id as string;
 const patient = ref<any>(null);
 const registrations = ref<any[]>([]);
 const showAddRegistrationModal = ref(false);
+const showEditModal = ref(false);
 const creating = ref(false);
+const updating = ref(false);
 const newRegWard = ref('');
+
+const editForm = ref({
+  fullName: '',
+  mrNumber: '',
+  phone: '',
+  nationality: '',
+  age: null as number | null,
+  ageUnit: 'years',
+  sex: '',
+  currentAddress: '',
+});
 
 function formatDate(date: string) {
   return dayjs(date).format('DD MMM YYYY');
@@ -142,6 +230,38 @@ async function fetchPatient() {
     patient.value = response.data;
   } catch (e) {
     // Handle error
+  }
+}
+
+function openEditModal() {
+  if (!patient.value) return;
+  editForm.value = {
+    fullName: patient.value.fullName,
+    mrNumber: patient.value.mrNumber || '',
+    phone: patient.value.phone || '',
+    nationality: patient.value.nationality || '',
+    age: patient.value.age,
+    ageUnit: patient.value.ageUnit || 'years',
+    sex: patient.value.sex || '',
+    currentAddress: patient.value.currentAddress || '',
+  };
+  showEditModal.value = true;
+}
+
+async function updatePatient() {
+  updating.value = true;
+  try {
+    await $fetch(`/api/patients/${patientId}`, {
+      method: 'PUT',
+      body: editForm.value,
+    });
+    
+    showEditModal.value = false;
+    await fetchPatient();
+  } catch (e: any) {
+    alert(e.message || 'Failed to update patient');
+  } finally {
+    updating.value = false;
   }
 }
 

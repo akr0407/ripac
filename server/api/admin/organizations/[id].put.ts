@@ -17,6 +17,26 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
+        // Get existing organization to merge settings
+        const existingOrg = await db.query.organizations.findFirst({
+            where: eq(organizations.id, id as string),
+        });
+
+        if (!existingOrg) {
+            throw createError({ statusCode: 404, message: 'Organization not found' });
+        }
+
+        // Merge settings - preserve existing settings and update hospitalApi
+        const existingSettings = (existingOrg.settings as Record<string, unknown>) || {};
+        const existingHospitalApi = existingSettings.hospitalApi as { enabled?: boolean; baseUrl?: string } | undefined;
+        const newSettings = {
+            ...existingSettings,
+            hospitalApi: {
+                enabled: body.hospitalApiEnabled ?? existingHospitalApi?.enabled ?? false,
+                baseUrl: body.hospitalApiBaseUrl ?? existingHospitalApi?.baseUrl ?? '',
+            },
+        };
+
         const updated = await db.update(organizations)
             .set({
                 name: body.name,
@@ -28,6 +48,7 @@ export default defineEventHandler(async (event) => {
                 phone: body.phone,
                 email: body.email || null,
                 fax: body.fax,
+                settings: newSettings,
                 updatedAt: new Date()
             })
             .where(eq(organizations.id, id as string))

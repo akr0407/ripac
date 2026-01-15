@@ -26,7 +26,13 @@ async function seed() {
             name: 'RSIA',
             slug: 'rsia',
             description: 'RSIA Hospital',
-            settings: { timezone: 'Asia/Makassar' },
+            settings: {
+                timezone: 'Asia/Makassar',
+                hospitalApi: {
+                    enabled: true,
+                    baseUrl: 'http://10.10.10.99:3020/api',
+                },
+            },
         }).onConflictDoNothing().returning();
 
         const [brosOrg] = await db.insert(organizations).values({
@@ -37,7 +43,13 @@ async function seed() {
             phone: '+ 62 361 247 499, +62 361 222 588(Hunting)',
             fax: '+62 361 22605',
             email: 'info@baliroyalhospital.co.id',
-            settings: { timezone: 'Asia/Makassar' },
+            settings: {
+                timezone: 'Asia/Makassar',
+                hospitalApi: {
+                    enabled: true,
+                    baseUrl: 'http://10.100.10.100:3020/api',
+                },
+            },
         }).onConflictDoUpdate({
             target: organizations.slug,
             set: {
@@ -45,6 +57,13 @@ async function seed() {
                 phone: '+ 62 361 247 499, +62 361 222 588(Hunting)',
                 fax: '+62 361 22605',
                 email: 'info@baliroyalhospital.co.id',
+                settings: {
+                    timezone: 'Asia/Makassar',
+                    hospitalApi: {
+                        enabled: true,
+                        baseUrl: 'http://10.100.10.100:3020/api',
+                    },
+                },
             }
         }).returning();
 

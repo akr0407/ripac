@@ -45,6 +45,15 @@ export default defineEventHandler(async (event) => {
 
     const { name, slug, description, address, phone, email, fax } = result.data;
 
+    // Build settings with hospitalApi if provided
+    const settings: Record<string, unknown> = { timezone: 'Asia/Jakarta' };
+    if (body.hospitalApiEnabled) {
+        settings.hospitalApi = {
+            enabled: body.hospitalApiEnabled,
+            baseUrl: body.hospitalApiBaseUrl || '',
+        };
+    }
+
     // Check if slug is already taken
     const existingOrg = await db.query.organizations.findFirst({
         where: (orgs, { eq }) => eq(orgs.slug, slug),
@@ -66,7 +75,7 @@ export default defineEventHandler(async (event) => {
         phone,
         email: email || null,
         fax,
-        settings: { timezone: 'Asia/Jakarta' },
+        settings,
     }).returning();
 
     // Log audit action

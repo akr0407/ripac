@@ -12,10 +12,17 @@
             </NuxtLink>
         </div>
         
+        <!-- Search Bar -->
+        <div class="flex items-center gap-2 bg-base-100 p-2 rounded-lg border border-base-200">
+             <Search class="w-4 h-4 opacity-50 ml-2" />
+             <input v-model="search" @input="handleSearch" type="text" placeholder="Search by name or MR Number..." class="input input-ghost input-sm w-full focus:outline-none" />
+        </div>
+
         <!-- Table -->
         <div class="card bg-base-100/70 backdrop-blur shadow-xl border border-base-200">
             <div class="card-body p-0">
                 <div class="overflow-x-auto">
+                    <!-- ... table content ... -->
                     <table class="table table-lg">
                         <thead>
                             <tr class="bg-base-200/50">
@@ -58,8 +65,13 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div v-if="loading" class="p-12 text-center text-base-content/50">
+                    <span class="loading loading-spinner loading-md"></span>
+                    <p class="mt-2">Loading...</p>
+                </div>
                 
-                <div v-if="patients.length === 0" class="p-12 text-center">
+                <div v-if="patients.length === 0 && !loading" class="p-12 text-center">
                     <p class="text-base-content/50">No patients found.</p>
                 </div>
             </div>
@@ -68,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus } from 'lucide-vue-next';
+import { Plus, Search } from 'lucide-vue-next';
 
 definePageMeta({
     middleware: ['auth'],
@@ -84,15 +96,33 @@ interface Patient {
 }
 
 const patients = ref<Patient[]>([]);
+const search = ref('');
+const loading = ref(false);
 
 // Fetch patients
 async function fetchPatients() {
+    loading.value = true;
     try {
-        const response = await $fetch<{ data: Patient[] }>('/api/patients');
+        const response = await $fetch<{ data: Patient[] }>('/api/patients', {
+            params: {
+                q: search.value
+            }
+        });
         patients.value = response.data || [];
     } catch (error) {
         console.error('Failed to fetch patients:', error);
+    } finally {
+        loading.value = false;
     }
+}
+
+// Debounced search
+let searchTimeout: any;
+function handleSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        fetchPatients();
+    }, 500);
 }
 
 onMounted(() => {

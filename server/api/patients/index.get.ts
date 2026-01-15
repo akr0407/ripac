@@ -1,6 +1,6 @@
 import { db } from '../../db';
 import { patients } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, or, ilike } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
     const session = await getUserSession(event);
@@ -21,7 +21,24 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const data = await db.select().from(patients).where(eq(patients.organizationId, orgId));
+    // Get query parameters
+    const query = getQuery(event);
+    const search = (query.q as string) || '';
+    const limit = parseInt(query.limit as string) || 20;
+
+    const whereCondition = and(
+        eq(patients.organizationId, orgId),
+        search ? or(
+            ilike(patients.fullName, `%${search}%`),
+            ilike(patients.mrNumber, `%${search}%`)
+        ) : undefined
+    );
+
+    const data = await db
+        .select()
+        .from(patients)
+        .where(whereCondition)
+        .limit(limit);
 
     return { data };
 });
