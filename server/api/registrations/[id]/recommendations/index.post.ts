@@ -15,8 +15,11 @@ const recommendationSchema = z.object({
     requestRepatriation: z.any().optional().transform(toBool),
     requiresEvacuation: z.any().optional().transform(toBool),
     canBeTransported: z.any().optional().transform(toBool),
+    canBeTransportedNote: z.any().optional().transform(val => val ? String(val) : null),
     fitToFly: z.any().optional().transform(toBool),
+    fitToFlyNote: z.any().optional().transform(val => val ? String(val) : null),
     needsWheelchair: z.any().optional().transform(toBool),
+    needsWheelchairNote: z.any().optional().transform(val => val ? String(val) : null),
     notes: z.any().optional().transform(val => val ? String(val) : null),
 }).passthrough();
 
@@ -38,8 +41,11 @@ export default defineEventHandler(async (event) => {
                 requestRepatriation: data.requestRepatriation,
                 requiresEvacuation: data.requiresEvacuation,
                 canBeTransported: data.canBeTransported,
+                canBeTransportedNote: data.canBeTransportedNote,
                 fitToFly: data.fitToFly,
+                fitToFlyNote: data.fitToFlyNote,
                 needsWheelchair: data.needsWheelchair,
+                needsWheelchairNote: data.needsWheelchairNote,
                 notes: data.notes,
                 updatedAt: new Date(),
             }).where(eq(doctorRecommendations.id, existing.id)).returning();
@@ -49,8 +55,11 @@ export default defineEventHandler(async (event) => {
                 requestRepatriation: data.requestRepatriation,
                 requiresEvacuation: data.requiresEvacuation,
                 canBeTransported: data.canBeTransported,
+                canBeTransportedNote: data.canBeTransportedNote,
                 fitToFly: data.fitToFly,
+                fitToFlyNote: data.fitToFlyNote,
                 needsWheelchair: data.needsWheelchair,
+                needsWheelchairNote: data.needsWheelchairNote,
                 notes: data.notes,
             }).returning();
         }

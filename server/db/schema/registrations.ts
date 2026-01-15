@@ -1,6 +1,7 @@
 import { pgTable, uuid, varchar, date, timestamp, index } from 'drizzle-orm/pg-core';
 import { patients } from './patients';
 import { organizations } from './organizations';
+import { doctors } from './doctors';
 
 export const registrations = pgTable('registrations', {
     id: uuid('id').defaultRandom().primaryKey(),
@@ -10,6 +11,7 @@ export const registrations = pgTable('registrations', {
     admissionDate: date('admission_date'),
     dischargeDate: date('discharge_date'),
     ward: varchar('ward', { length: 100 }),
+    managerOnDutyId: uuid('manager_on_duty_id').references(() => doctors.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [

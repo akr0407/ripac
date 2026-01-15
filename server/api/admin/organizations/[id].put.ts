@@ -25,6 +25,9 @@ export default defineEventHandler(async (event) => {
                 isActive: body.isActive,
                 logo: body.logo,
                 address: body.address,
+                phone: body.phone,
+                email: body.email || null,
+                fax: body.fax,
                 updatedAt: new Date()
             })
             .where(eq(organizations.id, id as string))

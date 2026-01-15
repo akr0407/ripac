@@ -7,6 +7,9 @@ export const organizations = pgTable('organizations', {
     description: text('description'),
     logo: varchar('logo', { length: 255 }), // URL to organization logo
     address: text('address'), // Physical address
+    phone: varchar('phone', { length: 255 }), // Supports multiple numbers
+    email: varchar('email', { length: 255 }),
+    fax: varchar('fax', { length: 50 }),
 
     // Organization settings (JSON for flexibility)
     settings: jsonb('settings').$type<{

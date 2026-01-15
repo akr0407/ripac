@@ -81,6 +81,15 @@
                   <input v-model="registration.admissionDate" type="date" class="input input-bordered" />
                 </div>
                 <div class="form-control">
+                  <label class="label"><span class="label-text">Manager on Duty</span></label>
+                  <select v-model="registration.managerOnDutyId" class="select select-bordered w-full">
+                    <option :value="null">Select Manager</option>
+                    <option v-for="opt in doctorOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="form-control">
                   <label class="label"><span class="label-text">Discharge Date</span></label>
                   <input v-model="registration.dischargeDate" type="date" class="input input-bordered" />
                 </div>
@@ -209,6 +218,15 @@
                 </div>
                 <div class="form-control">
                   <label class="label">
+                    <span class="label-text">Diff. Diagnose</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(examination, 'differentialDiagnosis')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                  <textarea spellcheck="true" autocorrect="on" autocapitalize="sentences" autocomplete="on" v-model="examination.differentialDiagnosis" class="textarea textarea-bordered" rows="2"></textarea>
+                </div>
+                <div class="form-control">
+                  <label class="label">
                     <span class="label-text">Treatment</span>
                     <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(examination, 'treatment')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
                         <Wand2 class="w-3 h-3" /> Fix
@@ -237,22 +255,49 @@
                   </label>
                 </div>
                 <div class="form-control">
-                  <label class="label cursor-pointer justify-start gap-4">
-                    <span class="label-text w-48">Can be Transported?</span>
-                    <input v-model="recommendation.canBeTransported" type="checkbox" class="toggle toggle-success" />
-                  </label>
+                  <div class="flex items-center gap-4">
+                     <label class="label cursor-pointer justify-start gap-4 flex-none w-64">
+                        <span class="label-text w-48">Can be Transported?</span>
+                        <input v-model="recommendation.canBeTransported" type="checkbox" class="toggle toggle-success" />
+                      </label>
+                      <input 
+                        v-if="recommendation.canBeTransported" 
+                        v-model="recommendation.canBeTransportedNote" 
+                        type="text" 
+                        placeholder="Transport details..." 
+                        class="input input-bordered input-sm flex-1" 
+                      />
+                  </div>
                 </div>
                  <div class="form-control">
-                  <label class="label cursor-pointer justify-start gap-4">
-                    <span class="label-text w-48">Fit to Fly?</span>
-                    <input v-model="recommendation.fitToFly" type="checkbox" class="toggle toggle-success" />
-                  </label>
+                   <div class="flex items-center gap-4">
+                      <label class="label cursor-pointer justify-start gap-4 flex-none w-64">
+                        <span class="label-text w-48">Fit to Fly?</span>
+                        <input v-model="recommendation.fitToFly" type="checkbox" class="toggle toggle-success" />
+                      </label>
+                       <input 
+                        v-if="recommendation.fitToFly" 
+                        v-model="recommendation.fitToFlyNote" 
+                        type="text" 
+                        placeholder="Fit to fly details..." 
+                        class="input input-bordered input-sm flex-1" 
+                      />
+                   </div>
                 </div>
                 <div class="form-control">
-                  <label class="label cursor-pointer justify-start gap-4">
-                    <span class="label-text w-48">Needs Wheelchair?</span>
-                    <input v-model="recommendation.needsWheelchair" type="checkbox" class="toggle toggle-info" />
-                  </label>
+                   <div class="flex items-center gap-4">
+                      <label class="label cursor-pointer justify-start gap-4 flex-none w-64">
+                        <span class="label-text w-48">Needs Wheelchair?</span>
+                        <input v-model="recommendation.needsWheelchair" type="checkbox" class="toggle toggle-info" />
+                      </label>
+                      <input 
+                        v-if="recommendation.needsWheelchair" 
+                        v-model="recommendation.needsWheelchairNote" 
+                        type="text" 
+                        placeholder="Wheelchair details..." 
+                        class="input input-bordered input-sm flex-1" 
+                      />
+                   </div>
                 </div>
                 <div class="form-control">
                   <label class="label">
@@ -282,7 +327,8 @@
                             </option>
                         </select>
                     </div>
-                    <div class="form-control" v-if="treatingDoctors[index].id">
+                    <!-- Main doctor selector hidden as it is always Doctor 1 -->
+                    <!-- <div class="form-control" v-if="treatingDoctors[index].id">
                          <label class="label cursor-pointer flex flex-col items-center gap-2">
                             <span class="label-text text-xs font-bold">Main</span>
                             <input type="radio" name="mainDoctor" class="radio radio-primary" 
@@ -290,7 +336,7 @@
                                 @change="treatingDoctors.forEach((d, i) => d.isMain = i === index)"
                             />
                         </label>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
               </div>
@@ -301,14 +347,38 @@
             <div v-show="currentStep === 6" class="print:!block">
               <h3 class="text-lg font-semibold mb-4">Comments</h3>
               <div class="form-control mb-4">
-                <textarea v-model="newComment" spellcheck="true" class="textarea textarea-bordered" rows="3" placeholder="Add a comment..."></textarea>
-                <button class="btn btn-primary mt-2 w-fit" @click="addComment" :disabled="!newComment.trim()">Add Comment</button>
+                 <label class="label">
+                    <span class="label-text">Add a comment...</span>
+                    <button class="btn btn-ghost btn-xs" @click="applyAutoCorrect(newComment, 'text')" :disabled="!isAutoCorrectReady" title="Auto Fix Spelling (English)">
+                        <Wand2 class="w-3 h-3" /> Fix
+                    </button>
+                  </label>
+                <textarea v-model="newComment.text" spellcheck="true" class="textarea textarea-bordered" rows="3" placeholder="Type here..."></textarea>
+                <button class="btn btn-primary mt-2 w-fit" @click="addComment" :disabled="!newComment.text.trim()">Add Comment</button>
               </div>
                <div class="divider"></div>
               <div v-if="comments.length" class="space-y-4">
-                <div v-for="comment in comments" :key="comment.id" class="bg-base-200 p-4 rounded-lg">
-                  <p class="text-sm text-base-content/60 mb-1">{{ formatDate(comment.createdAt) }}</p>
-                  <p>{{ comment.commentText }}</p>
+                <div v-for="comment in comments" :key="comment.id" class="bg-base-200 p-4 rounded-lg group">
+                  <div class="flex justify-between items-start mb-1">
+                    <p class="text-sm text-base-content/60">{{ formatDate(comment.createdAt) }}</p>
+                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" v-if="editingCommentId !== comment.id">
+                        <button class="btn btn-ghost btn-xs text-primary" @click="startEditComment(comment)" title="Edit">
+                            <Pencil class="w-3 h-3" />
+                        </button>
+                        <button class="btn btn-ghost btn-xs text-error" @click="deleteComment(comment.id)" title="Delete">
+                            <Trash2 class="w-3 h-3" />
+                        </button>
+                    </div>
+                  </div>
+                  
+                  <div v-if="editingCommentId === comment.id">
+                     <textarea v-model="editingCommentText" class="textarea textarea-bordered w-full mb-2" rows="2"></textarea>
+                     <div class="flex gap-2 justify-end">
+                         <button class="btn btn-ghost btn-sm" @click="cancelEditComment">Cancel</button>
+                         <button class="btn btn-primary btn-sm" @click="updateComment(comment.id)" :disabled="!editingCommentText.trim()">Save</button>
+                     </div>
+                  </div>
+                  <p v-else>{{ comment.commentText }}</p>
                 </div>
               </div>
               <div v-else class="text-center py-8 text-base-content/60">
@@ -368,7 +438,7 @@ definePageMeta({
   middleware: 'auth'
 });
 
-import { Save, Download, Eye, Wand2 } from 'lucide-vue-next';
+import { Save, Download, Eye, Wand2, Pencil, Trash2 } from 'lucide-vue-next';
 import dayjs from 'dayjs';
 
 
@@ -445,6 +515,7 @@ const examination = ref({
   physicalExamination: '',
   otherExamination: '',
   diagnosis: '',
+  differentialDiagnosis: '',
   treatment: '',
 });
 
@@ -452,8 +523,11 @@ const recommendation = ref({
   requestRepatriation: false,
   requiresEvacuation: false,
   canBeTransported: true,
+  canBeTransportedNote: '',
   fitToFly: true,
+  fitToFlyNote: '',
   needsWheelchair: false,
+  needsWheelchairNote: '',
   notes: '',
 });
 
@@ -465,7 +539,9 @@ const treatingDoctors = ref<{ id: string | null; isMain: boolean }[]>([
 ]);
 const doctorOptions = ref<{ label: string; value: string }[]>([]);
 const comments = ref<any[]>([]);
-const newComment = ref('');
+const newComment = ref({ text: '' });
+const editingCommentId = ref<string | null>(null);
+const editingCommentText = ref('');
 
 function formatDate(date: string) {
   return dayjs(date).format('DD MMM YYYY HH:mm');
@@ -557,7 +633,8 @@ async function saveCurrentStep() {
           body: { 
             ward: registration.value.ward, 
             admissionDate: registration.value.admissionDate, 
-            dischargeDate: registration.value.dischargeDate 
+            dischargeDate: registration.value.dischargeDate,
+            managerOnDutyId: registration.value.managerOnDutyId
           } 
         });
         break;
@@ -580,7 +657,7 @@ async function saveCurrentStep() {
               doctors: treatingDoctors.value.map((d, index) => ({ 
                   doctorId: d.id, 
                   sequence: index + 1,
-                  isMain: d.isMain 
+                  isMain: index === 0
               })) 
           } 
         });
@@ -630,13 +707,18 @@ async function handleSaveAll() {
   saving.value = true;
   try {
     await Promise.all([
-      $fetch(`/api/registrations/${registrationId}`, { method: 'PUT', body: { ward: registration.value.ward, admissionDate: registration.value.admissionDate, dischargeDate: registration.value.dischargeDate } }),
+      $fetch(`/api/registrations/${registrationId}`, { method: 'PUT', body: { ward: registration.value.ward, admissionDate: registration.value.admissionDate, dischargeDate: registration.value.dischargeDate, managerOnDutyId: registration.value.managerOnDutyId } }),
       $fetch(`/api/registrations/${registrationId}/history`, { method: 'POST', body: medicalHistory.value }),
       $fetch(`/api/registrations/${registrationId}/vitals`, { method: 'POST', body: vitalSigns.value }),
       $fetch(`/api/registrations/${registrationId}/examinations`, { method: 'POST', body: examination.value }),
       $fetch(`/api/registrations/${registrationId}/recommendations`, { method: 'POST', body: recommendation.value }),
-      $fetch(`/api/registrations/${registrationId}/treating-doctors`, { method: 'POST', body: { doctors: treatingDoctors.value.map((id, index) => ({ doctorId: id, sequence: index + 1 })) } }),
+      // Enforce Doctor 1 (index 0) is always Main
+      $fetch(`/api/registrations/${registrationId}/treating-doctors`, { method: 'POST', body: { doctors: treatingDoctors.value.map((d, index) => ({ doctorId: d.id, sequence: index + 1, isMain: index === 0 })) } }),
     ]);
+    
+    // Refresh data to get satisfied relationships (like Manager Name) for PDF
+    await fetchRegistration();
+    
     alert('All data saved successfully!'); 
   } catch (e) {
     console.error(e);
@@ -647,16 +729,55 @@ async function handleSaveAll() {
 }
 
 async function addComment() {
-  if (!newComment.value.trim()) return;
+  if (!newComment.value.text.trim()) return;
   try {
     const response = await $fetch<{ data: any }>(`/api/registrations/${registrationId}/comments`, {
       method: 'POST',
-      body: { commentText: newComment.value },
+      body: { commentText: newComment.value.text },
     });
     comments.value.unshift(response.data);
-    newComment.value = '';
+    newComment.value.text = '';
   } catch (e) {
     alert('Failed to add comment');
+  }
+}
+
+function startEditComment(comment: any) {
+  editingCommentId.value = comment.id;
+  editingCommentText.value = comment.commentText;
+}
+
+function cancelEditComment() {
+  editingCommentId.value = null;
+  editingCommentText.value = '';
+}
+
+async function updateComment(id: string) {
+  if (!editingCommentText.value.trim()) return;
+  try {
+    await $fetch(`/api/comments/${id}`, {
+      method: 'PUT',
+      body: { commentText: editingCommentText.value }
+    });
+    
+    // Update local state
+    const index = comments.value.findIndex(c => c.id === id);
+    if (index !== -1) {
+      comments.value[index].commentText = editingCommentText.value;
+    }
+    cancelEditComment();
+  } catch (e) {
+    alert('Failed to update comment');
+  }
+}
+
+async function deleteComment(id: string) {
+  if (!confirm('Are you sure you want to delete this comment?')) return;
+  try {
+    await $fetch(`/api/comments/${id}`, { method: 'DELETE' });
+    comments.value = comments.value.filter(c => c.id !== id);
+  } catch (e) {
+    alert('Failed to delete comment');
   }
 }
 
@@ -795,6 +916,16 @@ async function downloadPDF(preview = false) {
     doc.text(diagnosisText, margin, y);
     y += (diagnosisText.length * 5) + 5;
 
+    // Diff. Diagnosis
+    if (examination.value.differentialDiagnosis) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Diff. Diagnosis:", margin, y); 
+        doc.setFont("helvetica", "normal");
+        const diffText = doc.splitTextToSize(val(examination.value.differentialDiagnosis), pageWidth - (margin * 2) - 30);
+        doc.text(diffText, margin + 30, y);
+        y += (diffText.length * 5) + 5;
+    }
+
     // History & Vitals 
     
     // History Table
@@ -883,15 +1014,20 @@ async function downloadPDF(preview = false) {
 
     const recs = [
       `Request Repatriation: ${bool(recommendation.value.requestRepatriation)}`,
-      `Fit to Fly: ${bool(recommendation.value.fitToFly)}`,
+      `Fit to Fly: ${bool(recommendation.value.fitToFly)}${recommendation.value.fitToFly && recommendation.value.fitToFlyNote ? ` (${recommendation.value.fitToFlyNote})` : ''}`,
       `Requires Evacuation: ${bool(recommendation.value.requiresEvacuation)}`,
-      `Needs Wheelchair: ${bool(recommendation.value.needsWheelchair)}`
+      `Can be Transported: ${bool(recommendation.value.canBeTransported)}${recommendation.value.canBeTransported && recommendation.value.canBeTransportedNote ? ` (${recommendation.value.canBeTransportedNote})` : ''}`,
+      `Needs Wheelchair: ${bool(recommendation.value.needsWheelchair)}${recommendation.value.needsWheelchair && recommendation.value.needsWheelchairNote ? ` (${recommendation.value.needsWheelchairNote})` : ''}`
     ];
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(recs.join("   |   "), margin, y + 4);
-    y += 10;
+    
+    // Stack recommendations if too long? No, wrap them.
+    // recs.join(" | ") can be long.
+    const recText = doc.splitTextToSize(recs.join(" | "), pageWidth - (margin * 2));
+    doc.text(recText, margin, y + 4);
+    y += (recText.length * 5) + 5;
     
     const notes = doc.splitTextToSize(`Notes: ${val(recommendation.value.notes)}`, pageWidth - (margin * 2));
     doc.text(notes, margin, y);
@@ -915,7 +1051,7 @@ async function downloadPDF(preview = false) {
 
     if (docs.length) {
       doc.setFont("helvetica", "bold");
-      // List doctors
+    // List doctors
       docs.forEach(d => {
         const suffix = d.isMain ? ' (Main Treating Doctor)' : '';
         doc.text(`• ${d.name}${suffix}`, margin + 5, y);
@@ -926,39 +1062,78 @@ async function downloadPDF(preview = false) {
         y += 5;
     }
 
-    // Footer / Signatures
-    y = y + 15; 
-    
-    if (y > 250) { 
-        doc.addPage(); 
-        y = 30; 
+    // Comments Section
+    if (comments.value.length > 0) {
+        if (y > 230) { doc.addPage(); y = 20; }
+        y += 5;
+        doc.setFont("helvetica", "bold");
+        doc.text("COMMENTS", margin, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+        
+        comments.value.forEach(comment => {
+             // Date
+             const dateStr = formatDate(comment.createdAt);
+             doc.setFontSize(8);
+             doc.setTextColor(100);
+             doc.text(dateStr, margin, y);
+             y += 4;
+             
+             // Content
+             doc.setFontSize(10);
+             doc.setTextColor(0);
+             const commentLines = doc.splitTextToSize(comment.commentText, pageWidth - (margin * 2));
+             doc.text(commentLines, margin, y);
+             y += (commentLines.length * 5) + 5;
+             
+             // Page break check
+             if (y > 270) { doc.addPage(); y = 20; }
+        });
     }
 
-    const sigY = y;
+    // Footer / Signatures
+    
+    // Check if enough space for signatures (approx 60 units need)
+    if (y + 60 > 280) { 
+        doc.addPage(); 
+        y = 30; 
+    } else {
+        y += 20; // Extra margin as requested
+    }
+    
+    const sigY = y; 
     doc.setLineWidth(0.5);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     
-    doc.line(margin + 20, sigY, margin + 80, sigY); 
-    doc.text("Patient / Family Signature", margin + 30, sigY + 5);
+    // Patient Signature (Left) - REMOVED per user request
+    // doc.line(margin + 10, sigY + 20, margin + 70, sigY + 20); 
+    // doc.text("Patient / Family Signature", margin + 20, sigY + 25);
 
-    doc.line(pageWidth - 80, sigY, pageWidth - 20, sigY); 
+    // Manager on Duty Signature (Right)
+    const managerName = registration.value?.managerOnDuty ? 
+        (registration.value.managerOnDuty.fullName || registration.value.managerOnDuty.nickName || 'Unknown') : 
+        '______________________';
     
-    // Use Main Doctor for signature line, or first one, or default
-    const mainDoc = docs.find(d => d.isMain) || docs[0];
-    const sigLabel = mainDoc ? mainDoc.name : "Treating Doctor Signature";
+    doc.setFont("helvetica", "bold");
+    doc.text("ON BEHALF of TREATING DOCTOR", pageWidth - margin - 10, sigY, { align: 'right' });
     
-    // Center the text under the line
-    const textWidth = doc.getTextWidth(sigLabel || '');
-    const lineCenter = (pageWidth - 80) + ((pageWidth - 20) - (pageWidth - 80)) / 2;
-    // doc.text aligns to start by default
-    doc.text(sigLabel || "Treating Doctor", lineCenter, sigY + 5, { align: 'center' });
+    // Signature Line
+    doc.line(pageWidth - margin - 70, sigY + 20, pageWidth - margin - 10, sigY + 20);
+    
+    // Name and Title
+    doc.setFont("helvetica", "normal");
+    doc.text(managerName, pageWidth - margin - 10, sigY + 25, { align: 'right' });
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("(Manager on Duty)", pageWidth - margin - 10, sigY + 30, { align: 'right' });
     
     // Page Number
     const pageCount = doc.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
         doc.text(
            `Printed on ${dayjs().format('DD MMM YYYY HH:mm')} | ${val(org?.name) || 'RIPAC HIS'} | Page ${i} of ${pageCount}`,
            pageWidth / 2,

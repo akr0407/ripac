@@ -6,7 +6,13 @@ import { z } from 'zod';
 // Flexible schema for treating doctors
 const treatingDoctorsSchema = z.object({
     doctors: z.array(z.object({
-        doctorId: z.any().optional().transform(val => val ? String(val) : null),
+        doctorId: z.any().optional().transform(val => {
+            if (!val) return null;
+            if (typeof val === 'string') return val;
+            if (typeof val === 'object' && val.id) return String(val.id);
+            if (typeof val === 'object' && val.value) return String(val.value);
+            return String(val); // Fallback but likely [object Object]
+        }),
         sequence: z.any().optional().transform(val => {
             const num = Number(val);
             return isNaN(num) ? 1 : Math.max(1, Math.min(4, num));
@@ -43,6 +49,24 @@ export default defineEventHandler(async (event) => {
 
         return { success: true, message: 'Treating doctors updated' };
     } catch (error) {
+        // Debug logging
+        try {
+            const fs = await import('fs');
+            const path = await import('path');
+            const logPath = path.resolve(process.cwd(), 'server-debug.log');
+            const logMessage = `
+[${new Date().toISOString()}] Treating Doctors Save Failed:
+Registration ID: ${getRouterParam(event, 'id')}
+Error: ${error instanceof Error ? error.message : JSON.stringify(error)}
+Stack: ${error instanceof Error ? error.stack : ''}
+Validation Errors: ${error instanceof z.ZodError ? JSON.stringify(error.errors) : 'None'}
+----------------------------------------
+`;
+            fs.appendFileSync(logPath, logMessage);
+        } catch (e) {
+            console.error('Failed to write debug log', e);
+        }
+
         console.error('Treating doctors save error:', error);
         if (error instanceof z.ZodError) {
             console.error('Zod errors:', error.errors);

@@ -28,6 +28,7 @@ export default defineNuxtConfig({
       issuerUrl: process.env.SSO_ISSUER_URL || '',
       redirectUri: process.env.SSO_REDIRECT_URI || 'http://localhost:3000/api/auth/sso/callback',
     },
+
     // Session secret
     session: {
       password: process.env.NUXT_SESSION_PASSWORD || 'your-super-secret-session-password-min-32-chars',
