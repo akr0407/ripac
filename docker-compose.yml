@@ -10,6 +10,6 @@ services:
       # Override DATABASE_URL if needed to point to host machine
       # For Windows/Mac Docker Desktop: host.docker.internal
       # For Linux: 172.17.0.1 or specific IP
-      - DATABASE_URL=postgresql://akr:password@host.docker.internal:5432/ripac_db
+      - DATABASE_URL=postgresql://ripac:Royal2k19!@10.100.10.100:5432/ripac
       - HOST=0.0.0.0
       - PORT=3005

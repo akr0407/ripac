@@ -22,11 +22,11 @@ WORKDIR /app
 COPY --from=builder /app/.output ./.output
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3005
 
 # Set environment variables
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=3005
 ENV NODE_ENV=production
 
 # Start application
