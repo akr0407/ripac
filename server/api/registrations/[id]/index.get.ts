@@ -40,6 +40,7 @@ export default defineEventHandler(async (event) => {
                     address: organizations.address,
                     phone: organizations.phone,
                     email: organizations.email,
+                    fax: organizations.fax,
                 },
                 managerOnDuty: {
                     id: doctors.id,

@@ -32,6 +32,7 @@ export interface UserWithOrganizations extends UserSession {
         name: string;
         slug: string;
         role: string;
+        logo: string | null;
     }>;
 }
 
@@ -51,6 +52,7 @@ export async function getUserByEmail(email: string): Promise<UserWithOrganizatio
             name: organizations.name,
             slug: organizations.slug,
             role: memberships.role,
+            logo: organizations.logo,
         })
         .from(memberships)
         .innerJoin(organizations, eq(memberships.organizationId, organizations.id))
@@ -81,6 +83,7 @@ export async function getUserById(id: string): Promise<UserWithOrganizations | n
             name: organizations.name,
             slug: organizations.slug,
             role: memberships.role,
+            logo: organizations.logo,
         })
         .from(memberships)
         .innerJoin(organizations, eq(memberships.organizationId, organizations.id))

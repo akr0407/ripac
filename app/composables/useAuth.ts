@@ -3,6 +3,7 @@ interface Organization {
     name: string;
     slug: string;
     role: string;
+    logo?: string | null;
 }
 
 interface User {

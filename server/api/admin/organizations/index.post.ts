@@ -7,7 +7,7 @@ const createOrgSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
     description: z.string().optional(),
-    avatar: z.string().optional(),
+    logo: z.string().optional(),
     address: z.string().optional(),
     phone: z.string().optional(),
     email: z.string().email('Invalid email').optional().or(z.literal('')),
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const { name, slug, description, address, phone, email, fax } = result.data;
+    const { name, slug, description, logo, address, phone, email, fax } = result.data;
 
     // Build settings with hospitalApi if provided
     const settings: Record<string, unknown> = { timezone: 'Asia/Jakarta' };
@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
         name,
         slug,
         description,
+        logo,
         address,
         phone,
         email: email || null,

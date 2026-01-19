@@ -806,6 +806,12 @@ async function downloadPDF(preview = false) {
     const { jsPDF } = await import('jspdf');
     const autoTable = (await import('jspdf-autotable')).default;
 
+
+    // Helper for null/undefined
+    const val = (v: any) => v || '-';
+    // Helper for booleans
+    const bool = (v: any) => v ? 'Yes' : 'No';
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     
@@ -854,7 +860,7 @@ async function downloadPDF(preview = false) {
     doc.text(splitAddr, pageWidth / 2, y, { align: "center" });
     y += (splitAddr.length * 5);
     
-    doc.text(`Phone: ${val(org?.phone)} | Email: ${val(org?.email)}`, pageWidth / 2, y, { align: "center" });
+    doc.text(`Phone: ${val(org?.phone)} | Email: ${val(org?.email)} | Fax: ${val(org?.fax)}`, pageWidth / 2, y, { align: "center" });
 
     y += 8;
     doc.setFont("helvetica", "bold");
@@ -863,11 +869,6 @@ async function downloadPDF(preview = false) {
     doc.line(margin, y + 2, pageWidth - margin, y + 2); // Underline
 
     y += 10;
-
-    // Helper for null/undefined
-    const val = (v: any) => v || '-';
-    // Helper for booleans
-    const bool = (v: any) => v ? 'Yes' : 'No';
 
     // Patient Info Table
     // @ts-ignore

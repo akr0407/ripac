@@ -1,33 +1,15 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ripac_db
-      POSTGRES_USER: ripac_user
-      POSTGRES_PASSWORD: ripac_password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ripac_user -d ripac_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "3005:3005"
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://ripac_user:ripac_password@postgres:5432/ripac_db
-      NODE_ENV: production
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - .:/app
-      - /app/node_modules
-
-volumes:
-  postgres_data:
+      # Override DATABASE_URL if needed to point to host machine
+      # For Windows/Mac Docker Desktop: host.docker.internal
+      # For Linux: 172.17.0.1 or specific IP
+      - DATABASE_URL=postgresql://akr:password@host.docker.internal:5432/ripac_db
+      - HOST=0.0.0.0
+      - PORT=3005

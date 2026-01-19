@@ -94,8 +94,9 @@
           <div class="dropdown dropdown-bottom w-full">
             <label tabindex="0" class="btn btn-ghost w-full justify-between px-3 h-12 hover:bg-base-200/50">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/30">
-                  {{ currentOrg?.name?.charAt(0) || 'R' }}
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shadow-md shadow-primary/30" :class="currentOrg?.logo ? 'bg-white' : 'bg-gradient-to-tr from-primary to-secondary text-white font-bold text-sm'">
+                  <img v-if="currentOrg?.logo" :src="currentOrg.logo" :alt="currentOrg.name" class="w-full h-full object-contain p-0.5" />
+                  <span v-else>{{ currentOrg?.name?.charAt(0) || 'R' }}</span>
                 </div>
                 <div class="text-left">
                   <p class="text-sm font-semibold truncate max-w-[120px]">{{ currentOrg?.name || 'RIPAC' }}</p>
@@ -112,8 +113,9 @@
                   :class="{ 'active bg-primary text-primary-content': currentOrg?.id === org.id }"
                   class="flex items-center gap-3"
                 >
-                  <div class="w-6 h-6 rounded bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
-                    {{ org.name.charAt(0) }}
+                  <div class="w-6 h-6 rounded flex items-center justify-center overflow-hidden" :class="org.logo ? 'bg-transparent' : 'bg-primary/20 text-primary font-bold text-xs'">
+                    <img v-if="org.logo" :src="org.logo" :alt="org.name" class="w-full h-full object-contain" />
+                    <span v-else>{{ org.name.charAt(0) }}</span>
                   </div>
                   <span class="truncate">{{ org.name }}</span>
                   <span v-if="currentOrg?.id === org.id" class="ml-auto">✓</span>
@@ -224,7 +226,7 @@ const userInitials = computed(() => {
     const name = user.value?.name || 'User';
     const parts = name.split(' ');
     if (parts.length >= 2) {
-        return parts[0].charAt(0) + parts[1].charAt(0);
+        return parts[0]!.charAt(0) + parts[1]!.charAt(0);
     }
     return name.substring(0, 2).toUpperCase();
 });

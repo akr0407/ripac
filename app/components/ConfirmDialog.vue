@@ -1,6 +1,6 @@
 <template>
     <Teleport to="body">
-        <dialog class="modal" :class="{ 'modal-open': state.isOpen }">
+        <dialog class="modal z-[9999]" :class="{ 'modal-open': state.isOpen }">
             <div class="modal-box">
                 <h3 class="font-bold text-lg flex items-center gap-2">
                     <TriangleAlert v-if="state.options.type === 'danger'" class="w-6 h-6 text-error" />
