@@ -7,7 +7,13 @@ export default defineNitroPlugin((nitroApp) => {
         // Determine status
         const statusCode = (error as any).statusCode || 500;
         const statusMessage = (error as any).statusMessage || 'Internal Server Error';
-        const message = (error as any).message || statusMessage;
+
+        let message = (error as any).message || statusMessage;
+
+        // Hide sensitive error details in production for 500 errors
+        if (process.env.NODE_ENV === 'production' && statusCode === 500) {
+            message = 'Internal Server Error';
+        }
 
         // JSON response for API
         if (event.path.startsWith('/api')) {
