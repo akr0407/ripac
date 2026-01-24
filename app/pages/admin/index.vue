@@ -76,12 +76,22 @@ definePageMeta({
     middleware: ['auth'],
 });
 
+
+const { isAdmin } = useAuth();
 const stats = ref({
     organizations: 0,
     users: 0,
 });
 
 onMounted(async () => {
+    if (!isAdmin.value) {
+         showError({
+            statusCode: 403,
+            message: 'You do not have permission to access management dashboard',
+        });
+        return;
+    }
+
     try {
         const [orgsRes, usersRes] = await Promise.all([
             $fetch<{ organizations: any[] }>('/api/admin/organizations'),

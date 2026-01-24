@@ -342,7 +342,15 @@ async function deleteOrg(id: string) {
     }
 }
 
+const { isAdmin } = useAuth();
 onMounted(() => {
+    if (!isAdmin.value) {
+         showError({
+            statusCode: 403,
+            message: 'You do not have permission to manage organizations',
+        });
+        return;
+    }
     fetchOrganizations();
 });
 </script>

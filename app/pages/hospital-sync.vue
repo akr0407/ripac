@@ -183,9 +183,19 @@
                             <Stethoscope class="w-4 h-4" />
                             Hospital Doctors ({{ hospitalDoctors.length }} of {{ doctorTotal }})
                         </h3>
-                        <button class="btn btn-primary btn-sm" :disabled="importingAllDoctors" @click="importAllDoctors">
+                        <div v-if="importingAllDoctors" class="flex items-center gap-3 bg-base-200 px-4 py-1 rounded-lg">
+                            <span class="loading loading-spinner loading-xs text-primary"></span>
+                            <div class="flex flex-col w-32">
+                                <div class="flex justify-between text-[10px] mb-1">
+                                    <span>Importing...</span>
+                                    <span>{{ importProgress.current }}/{{ importProgress.total }}</span>
+                                </div>
+                                <progress class="progress progress-primary w-full h-1.5" :value="importProgress.current" :max="importProgress.total"></progress>
+                            </div>
+                        </div>
+                        <button v-else class="btn btn-primary btn-sm" :disabled="importingAllDoctors" @click="importAllDoctors">
                             <Download class="w-4 h-4" />
-                            {{ importingAllDoctors ? 'Importing...' : 'Import All' }}
+                            Import All
                         </button>
                     </div>
                     <div class="overflow-x-auto">
@@ -312,6 +322,7 @@ const doctorTotal = ref(0);
 const doctorTotalPages = ref(0);
 const importingDoctor = ref<string | null>(null);
 const importingAllDoctors = ref(false);
+const importProgress = ref({ current: 0, total: 0 });
 
 // Success message
 const successMessage = ref('');
@@ -452,6 +463,7 @@ async function importDoctor(doc: HospitalDoctor) {
 // Import all doctors on current page
 async function importAllDoctors() {
     importingAllDoctors.value = true;
+    importProgress.value = { current: 0, total: hospitalDoctors.value.length };
     let imported = 0;
 
     try {
@@ -464,6 +476,7 @@ async function importAllDoctors() {
                 },
             });
             imported++;
+            importProgress.value.current = imported;
         }
 
         showSuccess(`${imported} doctors imported successfully`);
@@ -471,6 +484,7 @@ async function importAllDoctors() {
         doctorError.value = error.data?.message || 'Failed to import doctors';
     } finally {
         importingAllDoctors.value = false;
+        importProgress.value = { current: 0, total: 0 };
     }
 }
 
@@ -491,7 +505,16 @@ function showSuccess(message: string) {
     }, 3000);
 }
 
+const { isAdmin } = useAuth();
+
 onMounted(() => {
+    if (!isAdmin.value) {
+        showError({
+            statusCode: 403,
+            message: 'You do not have permission to access this page',
+        });
+        return;
+    }
     checkHospitalApiStatus();
 });
 </script>

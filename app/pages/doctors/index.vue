@@ -111,19 +111,26 @@
                                 </h3>
                                 <p class="text-sm opacity-60">Search and import doctors from hospital database</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button class="btn btn-sm btn-outline btn-primary" @click="syncAllDoctors" :disabled="isSyncingAll || syncLoading || hospitalDoctors.length === 0">
-                                    {{ isSyncingAll ? 'Syncing...' : 'Sync All Pages' }}
+                            <div class="flex items-center gap-2 min-h-[32px]">
+                                <div v-if="isSyncingAll" class="flex items-center gap-3 bg-base-200 px-4 py-1.5 rounded-lg h-8">
+                                    <span class="loading loading-spinner loading-xs text-primary"></span>
+                                    <div class="flex flex-col w-32">
+                                        <div class="flex justify-between text-[10px] mb-0.5 leading-none">
+                                            <span>Syncing...</span>
+                                            <span>{{ syncProgress.current }}/{{ syncProgress.total }}</span>
+                                        </div>
+                                        <progress class="progress progress-primary w-full h-1" :value="syncProgress.current" :max="syncProgress.total"></progress>
+                                    </div>
+                                </div>
+                                <button v-else class="btn btn-sm btn-outline btn-primary h-8 min-h-[32px]" @click="syncAllDoctors" :disabled="syncLoading || hospitalDoctors.length === 0">
+                                    Sync All Pages
                                 </button>
                                 <button class="btn btn-sm btn-ghost btn-circle" @click="closeSyncModal">
                                     <X class="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
-                        <div v-if="isSyncingAll" class="mt-4">
-                            <progress class="progress progress-primary w-full" :value="syncPage" :max="syncTotalPages"></progress>
-                            <p class="text-xs text-center mt-1">{{ syncProgress }}</p>
-                        </div>
+
                     </div>
 
                     <div class="p-6 overflow-y-auto flex-1">
@@ -396,7 +403,7 @@ const hospitalDoctors = ref<HospitalDoctor[]>([]);
 const syncSearch = ref('');
 const importingId = ref<string | null>(null);
 const isSyncingAll = ref(false);
-const syncProgress = ref('');
+const syncProgress = ref({ current: 0, total: 0 });
 
 async function syncAllDoctors() {
     const confirmed = await confirm({
@@ -409,23 +416,29 @@ async function syncAllDoctors() {
     if (!confirmed) return;
 
     isSyncingAll.value = true;
+    syncProgress.value = { current: 0, total: 0 };
+    let importedCount = 0;
     
     try {
-        // Reset to page 1 to ensure we catch everything
+        // First get total count
         syncPage.value = 1;
         await fetchHospitalDoctors();
+        const totalDocs = syncTotal.value;
+        syncProgress.value = { current: 0, total: totalDocs };
         
+        // Loop through pages
         let currentPage = 1;
-        // Safety break
         while (currentPage <= syncTotalPages.value && isSyncingAll.value) {
-            syncProgress.value = `Syncing Page ${currentPage} / ${syncTotalPages.value}...`;
+             const candidates = hospitalDoctors.value; // Get all on current page
             
-            // Filter candidates
-            const candidates = hospitalDoctors.value.filter(d => !d.isImported || d.isDifferent);
-            
-            // Process sequentially to be safe
             for (const doc of candidates) {
-                await importDoctor(doc);
+                // Only import if needed (optional optimization, but user asked for sync all)
+                // For simplicity tracking progress exactly matching array loop
+                if (!doc.isImported || doc.isDifferent) {
+                     await importDoctor(doc, true);
+                }
+                importedCount++;
+                syncProgress.value.current = Math.min(importedCount, totalDocs);
             }
             
             // Move to next page
@@ -441,7 +454,7 @@ async function syncAllDoctors() {
         console.error('Sync All Error:', error);
     } finally {
         isSyncingAll.value = false;
-        syncProgress.value = '';
+        syncProgress.value = { current: 0, total: 0 };
         fetchDoctors(); // Refresh local
     }
 }
@@ -492,7 +505,7 @@ async function fetchHospitalDoctors() {
 }
 
 // Import single doctor
-async function importDoctor(doctor: HospitalDoctor) {
+async function importDoctor(doctor: HospitalDoctor, silent = false) {
     importingId.value = doctor.ParamedicCode;
     try {
         const result = await $fetch<any>('/api/external/paramedics/import', {
@@ -500,14 +513,21 @@ async function importDoctor(doctor: HospitalDoctor) {
             body: {
                 paramedicCode: doctor.ParamedicCode,
                 name: doctor.Name
-            }
+            },
+            // @ts-ignore
+            silent: silent // Pass silent to plugin interceptor
         });
         
         if (result.success) {
             // Update local stat
             doctor.isImported = true;
             doctor.isDifferent = false; // Reset difference flag since we just synced
-            // Limit toast or notification here if needed
+            
+            // Show toast only if not silent
+            if (!silent) {
+                 const { success } = useToast();
+                 success(result.message || 'Doctor imported');
+            }
         }
     } catch (error) {
         console.error('Import failed:', error);

@@ -13,3 +13,12 @@ services:
       - DATABASE_URL=postgresql://ripac:Royal2k19!@10.100.10.100:5432/ripac
       - HOST=0.0.0.0
       - PORT=3005
+
+      # Map .env variables to NUXT_ runtime config overrides
+      - NUXT_HOSPITAL_API_USERNAME=${HOSPITAL_API_USERNAME:-}
+      - NUXT_HOSPITAL_API_PASSWORD=${HOSPITAL_API_PASSWORD:-}
+      - NUXT_SSO_CLIENT_ID=${SSO_CLIENT_ID:-}
+      - NUXT_SSO_CLIENT_SECRET=${SSO_CLIENT_SECRET:-}
+      - NUXT_SSO_ISSUER_URL=${SSO_ISSUER_URL:-}
+      - NUXT_SSO_REDIRECT_URI=${SSO_REDIRECT_URI:-}
+      - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD:-}
