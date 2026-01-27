@@ -151,7 +151,7 @@
               Registrations
             </NuxtLink>
           </li>
-          <li>
+          <li v-if="user?.isSuperadmin">
             <NuxtLink to="/hospital-sync" :class="{ 'active !bg-primary/10 !text-primary': route.path.startsWith('/hospital-sync') }">
               <RefreshCw class="w-5 h-5" />
               Hospital Sync

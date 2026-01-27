@@ -37,7 +37,7 @@ h6 {
 
 /* Glassmorphism Utilities */
 .glass-panel {
-  @apply bg-white/70 dark:bg-base-100/70 backdrop-blur-xl border border-white/20 shadow-lg;
+  @apply bg-base-100/70 backdrop-blur-xl border border-base-content/10 shadow-lg;
 }
 
 .glass-sidebar {

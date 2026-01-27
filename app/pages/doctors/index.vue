@@ -101,7 +101,7 @@
         <!-- Sync Modal -->
         <Teleport to="body">
             <dialog class="modal modal-bottom sm:modal-middle" :class="{ 'modal-open': showSyncModal }">
-                <div class="modal-box w-11/12 max-w-4xl bg-base-100 p-0 overflow-hidden flex flex-col max-h-[90vh] text-base-content">
+                <div class="modal-box w-11/12 !max-w-7xl bg-base-100 p-0 overflow-hidden flex flex-col max-h-[90vh] text-base-content">
                     <div class="p-6 border-b border-base-200 sticky top-0 bg-base-100 z-10">
                         <div class="flex justify-between items-center">
                             <div>
