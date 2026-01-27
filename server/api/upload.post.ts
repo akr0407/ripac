@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
     const fileExt = uploadedFile.filename?.split('.').pop() || 'png';
     const fileName = `${randomUUID()}.${fileExt}`;
 
-    // Save to public/uploads
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
+    // Save to uploads directory (this will be mounted in Docker)
+    const uploadDir = join(process.cwd(), 'uploads');
     await mkdir(uploadDir, { recursive: true });
 
     const filePath = join(uploadDir, fileName);

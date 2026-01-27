@@ -22,3 +22,6 @@ services:
       - NUXT_SSO_ISSUER_URL=${SSO_ISSUER_URL:-}
       - NUXT_SSO_REDIRECT_URI=${SSO_REDIRECT_URI:-}
       - NUXT_SESSION_PASSWORD=${NUXT_SESSION_PASSWORD:-}
+    volumes:
+      - ./uploads:/app/uploads
+
