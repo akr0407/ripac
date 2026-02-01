@@ -72,16 +72,38 @@ export default defineEventHandler(async (event) => {
         }
 
         // Create registration
-        const [registration] = await db
-            .insert(registrations)
-            .values({
-                organizationId,
-                patientId,
-                registrationNumber: generateRegNumber(),
-                ward: data.ward || null,
-                admissionDate: data.admissionDate || null,
-            })
-            .returning();
+        // Create registration with retry logic for unique number
+        let registration;
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (attempts < maxAttempts) {
+            try {
+                [registration] = await db
+                    .insert(registrations)
+                    .values({
+                        organizationId,
+                        patientId,
+                        registrationNumber: generateRegNumber(),
+                        ward: data.ward || null,
+                        admissionDate: data.admissionDate || null,
+                    })
+                    .returning();
+                break;
+            } catch (error: any) {
+                if (error.code === '23505') { // Unique constraint violation
+                    attempts++;
+                    if (attempts === maxAttempts) {
+                        throw createError({
+                            statusCode: 500,
+                            statusMessage: 'Failed to generate unique registration number. Please try again.',
+                        });
+                    }
+                    continue;
+                }
+                throw error;
+            }
+        }
 
         return {
             success: true,

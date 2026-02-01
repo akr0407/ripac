@@ -36,16 +36,16 @@
                         <tbody>
                             <tr v-for="patient in patients" :key="patient.id" class="hover">
                                 <td>
-                                    <div class="flex items-center gap-3">
+                                    <NuxtLink :to="`/patients/${patient.id}`" class="flex items-center gap-3 hover:opacity-75 transition-opacity group">
                                         <div class="avatar placeholder">
                                             <div class="bg-primary text-primary-content rounded-full w-10">
                                                 <span>{{ patient.fullName?.charAt(0) || '?' }}</span>
                                             </div>
                                         </div>
                                         <div>
-                                            <div class="font-bold">{{ patient.fullName }}</div>
+                                            <div class="font-bold group-hover:underline">{{ patient.fullName }}</div>
                                         </div>
-                                    </div>
+                                    </NuxtLink>
                                 </td>
                                 <td>
                                     <code class="badge badge-ghost">{{ patient.mrNumber || '-' }}</code>
@@ -58,8 +58,8 @@
 
                                 <td>
                                     <div class="flex items-center gap-2">
-                                        <NuxtLink :to="`/patients/${patient.id}`" class="btn btn-ghost btn-sm">
-                                            View
+                                        <NuxtLink :to="`/patients/${patient.id}`" class="btn btn-ghost btn-sm" title="View Details">
+                                            <Eye class="w-4 h-4" />
                                         </NuxtLink>
                                         <button @click="deletePatient(patient)" class="btn btn-ghost btn-sm text-error" title="Delete Patient">
                                             <Trash2 class="w-4 h-4" />
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Search, Trash2 } from 'lucide-vue-next';
+import { Plus, Search, Trash2, Eye } from 'lucide-vue-next';
 
 definePageMeta({
     middleware: ['auth'],

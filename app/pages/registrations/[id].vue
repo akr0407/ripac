@@ -25,11 +25,11 @@
           {{ saving ? 'Saving...' : 'Save All' }}
         </button>
 
-        <button class="btn btn-secondary" @click="downloadPDF(false)" :disabled="isGeneratingPdf">
+        <button class="btn btn-secondary" @click="handleDownloadPdf(false)" :disabled="isGeneratingPdf">
           <Download class="w-5 h-5" />
           {{ isGeneratingPdf ? 'Generating...' : 'Download PDF' }}
         </button>
-        <button class="btn btn-outline" @click="downloadPDF(true)" :disabled="isGeneratingPdf">
+        <button class="btn btn-outline" @click="handleDownloadPdf(true)" :disabled="isGeneratingPdf">
           <Eye class="w-5 h-5" />
           Preview PDF
         </button>
@@ -402,25 +402,11 @@
       </div>
     </div>
     <!-- PDF Preview Modal -->
-    <dialog id="pdf_preview_modal" class="modal">
-      <div class="modal-box w-11/12 max-w-5xl h-[90vh] p-0 overflow-hidden relative bg-slate-100 flex flex-col">
-         <div class="flex justify-between items-center p-4 bg-white shadow-sm z-10">
-            <h3 class="font-bold text-lg">PDF Preview</h3>
-             <form method="dialog">
-                <button class="btn btn-sm btn-circle btn-ghost" @click="closePreview">✕</button>
-            </form>
-        </div>
-        <div class="flex-1 w-full h-full relative">
-            <iframe v-if="pdfPreviewUrl" :src="pdfPreviewUrl" class="w-full h-full border-0"></iframe>
-            <div v-else class="flex justify-center items-center h-full">
-                <span class="loading loading-spinner loading-lg"></span>
-            </div>
-        </div>
-      </div>
-       <form method="dialog" class="modal-backdrop">
-        <button @click="closePreview">close</button>
-      </form>
-    </dialog>
+    <PdfPreviewDialog 
+        id="pdf_preview_modal" 
+        :url="pdfPreviewUrl" 
+        @close="closePreview" 
+    />
 
     <SpellingReviewModal 
         ref="spellingModal"
@@ -446,8 +432,6 @@ const registrationId = route.params.id as string;
 const registration = ref<any>(null);
 const currentStep = ref(0);
 const saving = ref(false);
-const isGeneratingPdf = ref(false);
-const pdfPreviewUrl = ref<string | null>(null);
 
 useKeyboardShortcuts([
   { key: 's', ctrl: true, handler: () => handleSaveAll(), description: 'Save all data' },
@@ -529,11 +513,11 @@ const recommendation = ref({
   notes: '',
 });
 
-const treatingDoctors = ref<{ id: string | null; isMain: boolean }[]>([
-  { id: null, isMain: false },
-  { id: null, isMain: false },
-  { id: null, isMain: false },
-  { id: null, isMain: false }
+const treatingDoctors = ref<{ id: string | undefined; isMain: boolean }[]>([
+  { id: undefined, isMain: false },
+  { id: undefined, isMain: false },
+  { id: undefined, isMain: false },
+  { id: undefined, isMain: false }
 ]);
 const doctorOptions = ref<{ label: string; value: string }[]>([]);
 const comments = ref<any[]>([]);
@@ -591,10 +575,10 @@ async function fetchTreatingDoctors() {
     const response = await $fetch<{ data: any[] }>(`/api/registrations/${registrationId}/treating-doctors`);
     if (response.data) {
       const docs = [
-        { id: null, isMain: false },
-        { id: null, isMain: false },
-        { id: null, isMain: false },
-        { id: null, isMain: false }
+        { id: undefined, isMain: false },
+        { id: undefined, isMain: false },
+        { id: undefined, isMain: false },
+        { id: undefined, isMain: false }
       ];
       response.data.forEach((d: any) => {
         if (d.doctorSequence >= 1 && d.doctorSequence <= 4) {
@@ -703,24 +687,25 @@ async function goToStep(index: number) {
 
 async function handleSaveAll() {
   saving.value = true;
+  const toast = useToast();
   try {
     await Promise.all([
-      $fetch(`/api/registrations/${registrationId}`, { method: 'PUT', body: { ward: registration.value.ward, admissionDate: registration.value.admissionDate, dischargeDate: registration.value.dischargeDate, managerOnDutyId: registration.value.managerOnDutyId } }),
-      $fetch(`/api/registrations/${registrationId}/history`, { method: 'POST', body: medicalHistory.value }),
-      $fetch(`/api/registrations/${registrationId}/vitals`, { method: 'POST', body: vitalSigns.value }),
-      $fetch(`/api/registrations/${registrationId}/examinations`, { method: 'POST', body: examination.value }),
-      $fetch(`/api/registrations/${registrationId}/recommendations`, { method: 'POST', body: recommendation.value }),
+      $fetch(`/api/registrations/${registrationId}`, { method: 'PUT', body: { ward: registration.value.ward, admissionDate: registration.value.admissionDate, dischargeDate: registration.value.dischargeDate, managerOnDutyId: registration.value.managerOnDutyId }, silent: true }),
+      $fetch(`/api/registrations/${registrationId}/history`, { method: 'POST', body: medicalHistory.value, silent: true }),
+      $fetch(`/api/registrations/${registrationId}/vitals`, { method: 'POST', body: vitalSigns.value, silent: true }),
+      $fetch(`/api/registrations/${registrationId}/examinations`, { method: 'POST', body: examination.value, silent: true }),
+      $fetch(`/api/registrations/${registrationId}/recommendations`, { method: 'POST', body: recommendation.value, silent: true }),
       // Enforce Doctor 1 (index 0) is always Main
-      $fetch(`/api/registrations/${registrationId}/treating-doctors`, { method: 'POST', body: { doctors: treatingDoctors.value.map((d, index) => ({ doctorId: d.id, sequence: index + 1, isMain: index === 0 })) } }),
+      $fetch(`/api/registrations/${registrationId}/treating-doctors`, { method: 'POST', body: { doctors: treatingDoctors.value.map((d, index) => ({ doctorId: d.id, sequence: index + 1, isMain: index === 0 })) }, silent: true }),
     ]);
     
     // Refresh data to get satisfied relationships (like Manager Name) for PDF
     await fetchRegistration();
     
-    alert('All data saved successfully!'); 
+    toast.success('All data saved successfully!'); 
   } catch (e) {
     console.error(e);
-    alert('Failed to save some data');
+    toast.error('Failed to save some data');
   } finally {
     saving.value = false;
   }
@@ -798,372 +783,14 @@ onMounted(async () => {
 
 
 
-async function downloadPDF(preview = false) {
-  isGeneratingPdf.value = true;
-  await nextTick();
 
-  try {
-    const { jsPDF } = await import('jspdf');
-    const autoTable = (await import('jspdf-autotable')).default;
+const { isGeneratingPdf, pdfPreviewUrl, generatePdf, closePreview } = useRegistrationPdf();
 
-
-    // Helper for null/undefined
-    const val = (v: any) => v || '-';
-    // Helper for booleans
-    const bool = (v: any) => v ? 'Yes' : 'No';
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Config
-    const margin = 15;
-    let y = 15;
-
-    const org = registration.value?.organization;
-
-    // Logo Handling (If URL exists)
-    if (org?.logo) {
-      try {
-        const img = new Image();
-        img.src = org.logo;
-        // Wait simple logic, or just assume it loads? jsPDF needs base64 or loaded img.
-        // For simplicity, let's try adding it. If CORS issues, might fail.
-        // Better: Use Name if Logo fails or just Text. Use small timeout?
-        // Let's use simple addImage and catch error
-        
-        // Calculate aspect ratio to fit height 20mm
-        // doc.addImage(org.logo, 'JPEG', margin, y, 20, 20);
-        // Centered logo?
-        doc.addImage(org.logo, 'PNG', (pageWidth/2) - 15, y, 30, 20, undefined, 'FAST'); // Assuming PNG/JPEG
-        y += 25;
-      } catch (e) {
-        console.warn('Logo load failed, using text', e);
-         doc.setFont("helvetica", "bold");
-         doc.setFontSize(18);
-         doc.text(org?.name || "RIPAC HOSPITAL", pageWidth / 2, y + 10, { align: "center" });
-         y += 15;
-      }
-    } else {
-        // Fallback or No Logo
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(18);
-        doc.text(org?.name || "RIPAC HOSPITAL", pageWidth / 2, y + 5, { align: "center" });
-        y += 12;
-    }
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    
-    // Address (Multiline support)
-    const address = org?.address || "123 Healthcare Avenue, Medical District";
-    const splitAddr = doc.splitTextToSize(address, pageWidth - (margin * 2));
-    doc.text(splitAddr, pageWidth / 2, y, { align: "center" });
-    y += (splitAddr.length * 5);
-    
-    doc.text(`Phone: ${val(org?.phone)} | Email: ${val(org?.email)} | Fax: ${val(org?.fax)}`, pageWidth / 2, y, { align: "center" });
-
-    y += 8;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("MEDICAL RESUME", pageWidth / 2, y, { align: "center" });
-    doc.line(margin, y + 2, pageWidth - margin, y + 2); // Underline
-
-    y += 10;
-
-    // Patient Info Table
-    // @ts-ignore
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
-      bodyStyles: { lineColor: [0, 0, 0], lineWidth: 0.1 },
-      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak', font: 'helvetica' },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 35 },
-        1: { cellWidth: 55 },
-        2: { fontStyle: 'bold', cellWidth: 35 },
-        3: { cellWidth: 55 }
-      },
-      body: [
-        ['Patient Name', val(registration.value?.patient?.fullName), 'MR Number', val(registration.value?.patient?.mrNumber)],
-        [
-          'Age / Sex', 
-          `${val(registration.value?.patient?.age)} ${val(registration.value?.patient?.ageUnit)} / ${registration.value?.patient?.sex ? registration.value.patient.sex.toUpperCase() : '-'}`,
-          'Registration No', 
-          val(registration.value?.registrationNumber)
-        ],
-        ['Nationality', val(registration.value?.patient?.nationality), 'Admission Date', formatDate(registration.value?.admissionDate || '')],
-        ['Address', { content: val(registration.value?.patient?.currentAddress), colSpan: 3 }],
-        ['Ward', val(registration.value?.ward), 'Discharge Date', formatDate(registration.value?.dischargeDate || '')]
-      ]
-    });
-
-    // @ts-ignore
-    y = doc.lastAutoTable.finalY + 10;
-
-    // Diagnosis
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("DIAGNOSIS", margin, y);
-    doc.line(margin, y + 1, pageWidth - margin, y + 1); // Separator
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    // Split text to fit width
-    const diagnosisText = doc.splitTextToSize(val(examination.value.diagnosis), pageWidth - (margin * 2));
-    doc.text(diagnosisText, margin, y);
-    y += (diagnosisText.length * 5) + 5;
-
-    // Diff. Diagnosis
-    if (examination.value.differentialDiagnosis) {
-        doc.setFont("helvetica", "bold");
-        doc.text("Diff. Diagnosis:", margin, y); 
-        doc.setFont("helvetica", "normal");
-        const diffText = doc.splitTextToSize(val(examination.value.differentialDiagnosis), pageWidth - (margin * 2) - 30);
-        doc.text(diffText, margin + 30, y);
-        y += (diffText.length * 5) + 5;
-    }
-
-    // History & Vitals 
-    
-    // History Table
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("MEDICAL HISTORY", margin, y);
-    doc.line(margin, y + 1, pageWidth - margin, y + 1);
-    y += 5;
-
-    // @ts-ignore
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: 'plain',
-      styles: { fontSize: 10, cellPadding: 1, overflow: 'linebreak' },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 }, 1: { cellWidth: 'auto' } },
-      body: [
-        ['Present Complaint:', val(medicalHistory.value.presentComplaint)],
-        ['Past History:', val(medicalHistory.value.pastMedicalHistory)],
-        ['Allergies:', val(medicalHistory.value.allergicHistory)],
-        ['Current Medication:', val(medicalHistory.value.currentMedication)]
-      ]
-    });
-    // @ts-ignore
-    y = doc.lastAutoTable.finalY + 10;
-    
-    if (y > 250) { doc.addPage(); y = 20; }
-
-    // Vitals
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("VITAL SIGNS", margin, y);
-    doc.line(margin, y + 1, pageWidth - margin, y + 1);
-    y += 5;
-
-     // @ts-ignore
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0,0,0] },
-      bodyStyles: { lineWidth: 0.1, lineColor: [0,0,0], halign: 'center' },
-      head: [['Pulse', 'BP', 'RR', 'Temp', 'SpO2', 'GCS']],
-      body: [[
-        val(vitalSigns.value.pulseRate),
-        val(vitalSigns.value.bloodPressure),
-        val(vitalSigns.value.respiratoryRate),
-        val(vitalSigns.value.temperature),
-        val(vitalSigns.value.spo2),
-        val(vitalSigns.value.gcs)
-      ]]
-    });
-    // @ts-ignore
-    y = doc.lastAutoTable.finalY + 10;
-
-    // Examination
-    if (y > 240) { doc.addPage(); y = 20; }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("EXAMINATION & TREATMENT", margin, y);
-    doc.line(margin, y + 1, pageWidth - margin, y + 1);
-    y += 5;
-
-    // @ts-ignore
-    autoTable(doc, {
-      startY: y,
-      margin: { left: margin, right: margin },
-      theme: 'plain',
-      styles: { fontSize: 10, cellPadding: 2 },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } },
-      body: [
-        ['Physical Exam:', val(examination.value.physicalExamination)],
-        ['Treatment:', val(examination.value.treatment)]
-      ]
-    });
-    // @ts-ignore
-    y = doc.lastAutoTable.finalY + 10;
-
-    // Recommendations
-    if (y > 230) { doc.addPage(); y = 20; }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("RECOMMENDATIONS", margin, y);
-    doc.line(margin, y + 1, pageWidth - margin, y + 1);
-    y += 5;
-
-    const recs = [
-      `Request Repatriation: ${bool(recommendation.value.requestRepatriation)}`,
-      `Fit to Fly: ${bool(recommendation.value.fitToFly)}${recommendation.value.fitToFly && recommendation.value.fitToFlyNote ? ` (${recommendation.value.fitToFlyNote})` : ''}`,
-      `Requires Evacuation: ${bool(recommendation.value.requiresEvacuation)}`,
-      `Can be Transported: ${bool(recommendation.value.canBeTransported)}${recommendation.value.canBeTransported && recommendation.value.canBeTransportedNote ? ` (${recommendation.value.canBeTransportedNote})` : ''}`,
-      `Needs Wheelchair: ${bool(recommendation.value.needsWheelchair)}${recommendation.value.needsWheelchair && recommendation.value.needsWheelchairNote ? ` (${recommendation.value.needsWheelchairNote})` : ''}`
-    ];
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    
-    // Stack recommendations if too long? No, wrap them.
-    // recs.join(" | ") can be long.
-    const recText = doc.splitTextToSize(recs.join(" | "), pageWidth - (margin * 2));
-    doc.text(recText, margin, y + 4);
-    y += (recText.length * 5) + 5;
-    
-    const notes = doc.splitTextToSize(`Notes: ${val(recommendation.value.notes)}`, pageWidth - (margin * 2));
-    doc.text(notes, margin, y);
-    y += (notes.length * 5) + 10;
-
-    // Treating Doctors
-    if (y > 230) { doc.addPage(); y = 20; }
-    doc.setFont("helvetica", "bold");
-    doc.text("TREATING DOCTORS", margin, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    
-    // Filter and map doctors
-    const docs = treatingDoctors.value
-        .filter(d => d.id)
-        .map(d => ({
-            name: doctorOptions.value.find(opt => opt.value === d.id)?.label,
-            isMain: d.isMain
-        }))
-        .filter(d => d.name);
-
-    if (docs.length) {
-      doc.setFont("helvetica", "bold");
-    // List doctors
-      docs.forEach(d => {
-        const suffix = d.isMain ? ' (Main Treating Doctor)' : '';
-        doc.text(`• ${d.name}${suffix}`, margin + 5, y);
-        y += 5;
-      });
-    } else {
-        doc.text("No doctors recorded.", margin + 5, y);
-        y += 5;
-    }
-
-    // Comments Section
-    if (comments.value.length > 0) {
-        if (y > 230) { doc.addPage(); y = 20; }
-        y += 5;
-        doc.setFont("helvetica", "bold");
-        doc.text("COMMENTS", margin, y);
-        y += 6;
-        doc.setFont("helvetica", "normal");
-        
-        comments.value.forEach(comment => {
-             // Date
-             const dateStr = formatDate(comment.createdAt);
-             doc.setFontSize(8);
-             doc.setTextColor(100);
-             doc.text(dateStr, margin, y);
-             y += 4;
-             
-             // Content
-             doc.setFontSize(10);
-             doc.setTextColor(0);
-             const commentLines = doc.splitTextToSize(comment.commentText, pageWidth - (margin * 2));
-             doc.text(commentLines, margin, y);
-             y += (commentLines.length * 5) + 5;
-             
-             // Page break check
-             if (y > 270) { doc.addPage(); y = 20; }
-        });
-    }
-
-    // Footer / Signatures
-    
-    // Check if enough space for signatures (approx 60 units need)
-    if (y + 60 > 280) { 
-        doc.addPage(); 
-        y = 30; 
-    } else {
-        y += 20; // Extra margin as requested
-    }
-    
-    const sigY = y; 
-    doc.setLineWidth(0.5);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    
-    // Patient Signature (Left) - REMOVED per user request
-    // doc.line(margin + 10, sigY + 20, margin + 70, sigY + 20); 
-    // doc.text("Patient / Family Signature", margin + 20, sigY + 25);
-
-    // Manager on Duty Signature (Right)
-    const managerName = registration.value?.managerOnDuty ? 
-        (registration.value.managerOnDuty.fullName || registration.value.managerOnDuty.nickName || 'Unknown') : 
-        '______________________';
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("ON BEHALF of TREATING DOCTOR", pageWidth - margin - 10, sigY, { align: 'right' });
-    
-    // Signature Line
-    doc.line(pageWidth - margin - 70, sigY + 20, pageWidth - margin - 10, sigY + 20);
-    
-    // Name and Title
-    doc.setFont("helvetica", "normal");
-    doc.text(managerName, pageWidth - margin - 10, sigY + 25, { align: 'right' });
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("(Manager on Duty)", pageWidth - margin - 10, sigY + 30, { align: 'right' });
-    
-    // Page Number
-    const pageCount = doc.getNumberOfPages();
-    for(let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text(
-           `Printed on ${dayjs().format('DD MMM YYYY HH:mm')} | ${val(org?.name) || 'RIPAC HIS'} | Page ${i} of ${pageCount}`,
-           pageWidth / 2,
-           doc.internal.pageSize.getHeight() - 10,
-           { align: 'center' }
-        );
-    }
-
+async function handleDownloadPdf(preview: boolean) {
+    await generatePdf(registrationId, preview);
     if (preview) {
-        pdfPreviewUrl.value = URL.createObjectURL(doc.output('blob'));
-        // Open modal
         const modal = document.getElementById('pdf_preview_modal') as HTMLDialogElement;
         if (modal) modal.showModal();
-    } else {
-        doc.save(`Medical_Resume_${registration.value?.registrationNumber || 'Doc'}.pdf`);
-    }
-
-  } catch (e) {
-    alert('Failed to generate PDF: ' + (e instanceof Error ? e.message : String(e)));
-    console.error('PDF Generation Error:', e);
-  } finally {
-    isGeneratingPdf.value = false;
-  }
-}
-
-function closePreview() {
-    const modal = document.getElementById('pdf_preview_modal') as HTMLDialogElement;
-    if (modal) modal.close();
-    if (pdfPreviewUrl.value) {
-        URL.revokeObjectURL(pdfPreviewUrl.value);
-        pdfPreviewUrl.value = null;
     }
 }
 </script>

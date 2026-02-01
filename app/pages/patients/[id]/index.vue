@@ -87,9 +87,12 @@
                 <td>{{ reg.ward || '-' }}</td>
                 <td>{{ formatDate(reg.createdAt) }}</td>
                 <td>
-                  <NuxtLink :to="`/registrations/${reg.id}`" class="btn btn-sm btn-ghost">
-                    View Details
+                  <NuxtLink :to="`/registrations/${reg.id}`" class="btn btn-sm btn-ghost" title="View Details">
+                    <Eye class="w-4 h-4" />
                   </NuxtLink>
+                  <button @click="handlePrint(reg.id)" class="btn btn-sm btn-ghost" :disabled="isGeneratingPdf" title="Print PDF">
+                    <Printer class="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -100,6 +103,12 @@
         </div>
       </div>
     </div>
+
+    <PdfPreviewDialog 
+        id="pdf_preview_modal_patient" 
+        :url="pdfPreviewUrl" 
+        @close="closePreview" 
+    />
 
     <!-- New Registration Modal -->
     <!-- New Registration Modal -->
@@ -195,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Edit } from 'lucide-vue-next';
+import { Plus, Edit, Printer, Eye } from 'lucide-vue-next';
 import dayjs from 'dayjs';
 
 const route = useRoute();
@@ -208,6 +217,14 @@ const showEditModal = ref(false);
 const creating = ref(false);
 const updating = ref(false);
 const newRegWard = ref('');
+
+const { isGeneratingPdf, pdfPreviewUrl, generatePdf, closePreview } = useRegistrationPdf();
+
+async function handlePrint(id: string) {
+    await generatePdf(id, true);
+    const modal = document.getElementById('pdf_preview_modal_patient') as HTMLDialogElement;
+    if (modal) modal.showModal();
+}
 
 const editForm = ref({
   fullName: '',

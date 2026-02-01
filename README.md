@@ -1,75 +1,67 @@
-# Nuxt Minimal Starter
+# RIPAC - Medical Resume & Patient Management System
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+RIPAC is a comprehensive web application for managing patient records and generating medical resumes (Patient Discharge Summaries). It automates the process of tracking patient history, vital signs, examinations, and doctor recommendations.
 
-## Setup
+## 🚀 Key Features
 
-Make sure to install dependencies:
+*   **Patient Management**: Create, search, and manage detailed patient profiles.
+*   **Medical Resumes (Registrations)**:
+    *   Track patient admissions and discharges.
+    *   Record comprehensive Medical History, Vital Signs, and Physical Examinations.
+    *   Manage Treating Doctors and Recommendations (Fit to Fly, Repatriation, etc.).
+    *   **Auto-generated PDFs**: Instantly generate and print official Medical Resume PDFs.
+*   **Organization Support**: Multi-tenant architecture for managing different organizations/clinics.
+*   **Doctor Management**: Manage list of doctors and assign them to patient cases.
+*   **Interactive Dashboard**: Quick overview of patients, doctors, and recent registrations.
 
-```bash
-# npm
-npm install
+## 🛠 Tech Stack
 
-# pnpm
-pnpm install
+*   **Framework**: [Nuxt 3](https://nuxt.com) (Vue 3)
+*   **Styling**: [TailwindCSS](https://tailwindcss.com) & [DaisyUI](https://daisyui.com)
+*   **Database**: PostgreSQL with [Drizzle ORM](https://orm.drizzle.team)
+*   **Authentication**: `nuxt-auth-utils`
+*   **PDF Generation**: `jspdf` & `jspdf-autotable`
+*   **Validation**: `zod`
+*   **Icons**: `lucide-vue-next`
 
-# yarn
-yarn install
+## ⚙️ Setup & Installation
 
-# bun
-bun install
-```
+1.  **Clone the repository**
+    ```bash
+    git clone <repository-url>
+    cd ripac
+    ```
 
-## Development Server
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-Start the development server on `http://localhost:3000`:
+3.  **Environment Configuration**
+    Create a `.env` file in the root directory:
+    ```env
+    # Database
+    DATABASE_URL="postgres://user:password@localhost:5432/ripac_db"
 
-```bash
-# npm
-npm run dev
+    # Auth
+    NUXT_SESSION_PASSWORD="complex-password-at-least-32-characters-long"
+    ```
 
-# pnpm
-pnpm dev
+4.  **Database Migration**
+    Apply the database schema:
+    ```bash
+    npm run db:push
+    ```
 
-# yarn
-yarn dev
+5.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+    Access the app at `http://localhost:3000`.
 
-# bun
-bun run dev
-```
+## 📦 Scripts
 
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+*   `npm run dev`: Start development server
+*   `npm run build`: Build for production
+*   `npm run db:push`: Push schema changes to database
+*   `npm run db:studio`: Open Drizzle Studio to view data

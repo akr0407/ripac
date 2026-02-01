@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, date, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, date, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { patients } from './patients';
 import { organizations } from './organizations';
 import { doctors } from './doctors';
@@ -16,7 +16,11 @@ export const registrations = pgTable('registrations', {
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
     index('registrations_org_idx').on(table.organizationId),
+    uniqueIndex('registrations_number_unique_idx').on(table.registrationNumber),
 ]);
+
+// Actually, better to just use unique() on the column definition or uniqueIndex
+
 
 export type Registration = typeof registrations.$inferSelect;
 export type NewRegistration = typeof registrations.$inferInsert;

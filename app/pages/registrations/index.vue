@@ -39,9 +39,14 @@
                                 <td>{{ reg.registrationNumber }}</td>
                                 <td>{{ formatDate(reg.admissionDate) }}</td>
                                 <td>
-                                    <NuxtLink :to="`/registrations/${reg.id}`" class="btn btn-ghost btn-sm">
-                                        View
-                                    </NuxtLink>
+                                    <div class="flex items-center gap-2">
+                                        <NuxtLink :to="`/registrations/${reg.id}`" class="btn btn-ghost btn-sm" title="View Details">
+                                            <Eye class="w-4 h-4" />
+                                        </NuxtLink>
+                                        <button @click="handlePrint(reg.id)" class="btn btn-ghost btn-sm" :disabled="isGeneratingPdf" title="Print PDF">
+                                            <Printer class="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -51,13 +56,18 @@
                 <div v-if="registrations.length === 0" class="p-12 text-center">
                     <p class="text-base-content/50">No registrations found.</p>
                 </div>
-            </div>
-        </div>
-    </div>
-</template>
+             </div>
+         </div>
+     </div>
+    <PdfPreviewDialog 
+        id="pdf_preview_modal_list" 
+        :url="pdfPreviewUrl" 
+        @close="closePreview" 
+    />
+ </template>
 
 <script setup lang="ts">
-import { Search } from 'lucide-vue-next';
+import { Search, Printer, Eye } from 'lucide-vue-next';
 
 definePageMeta({
     middleware: ['auth'],
@@ -104,6 +114,15 @@ function handleSearch() {
     searchTimeout = setTimeout(() => {
         fetchRegistrations();
     }, 500);
+}
+
+
+const { isGeneratingPdf, pdfPreviewUrl, generatePdf, closePreview } = useRegistrationPdf();
+
+async function handlePrint(id: string) {
+    await generatePdf(id, true);
+    const modal = document.getElementById('pdf_preview_modal_list') as HTMLDialogElement;
+    if (modal) modal.showModal();
 }
 
 onMounted(() => {

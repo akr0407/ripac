@@ -103,15 +103,15 @@ onMounted(async () => {
     
     try {
         const [patientsRes, doctorsRes, registrationsRes] = await Promise.all([
-            $fetch<{ data: any[] }>('/api/patients'),
-            $fetch<{ data: any[] }>('/api/doctors'),
-            $fetch<{ data: any[] }>('/api/registrations'),
+            $fetch<{ total: number }>('/api/patients', { params: { limit: 1 } }),
+            $fetch<{ total: number }>('/api/doctors', { params: { limit: 1 } }),
+            $fetch<{ total: number }>('/api/registrations', { params: { limit: 1 } }),
         ]);
         
         stats.value = {
-            patients: patientsRes.data?.length || 0,
-            doctors: doctorsRes.data?.length || 0,
-            registrations: registrationsRes.data?.length || 0,
+            patients: patientsRes.total || 0,
+            doctors: doctorsRes.total || 0,
+            registrations: registrationsRes.total || 0,
         };
     } catch (error) {
         console.error('Failed to fetch stats:', error);
