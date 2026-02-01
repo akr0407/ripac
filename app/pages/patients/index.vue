@@ -29,7 +29,7 @@
                                 <th>Name</th>
                                 <th>MR Number</th>
                                 <th>Age/Sex</th>
-                                <th>Registration No</th>
+
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -55,11 +55,16 @@
                                         {{ patient.age || '-' }} {{ patient.sex === 'male' ? 'M' : patient.sex === 'female' ? 'F' : '' }}
                                     </span>
                                 </td>
-                                <td class="text-sm">{{ patient.registrationNumber || '-' }}</td>
+
                                 <td>
-                                    <NuxtLink :to="`/patients/${patient.id}`" class="btn btn-ghost btn-sm">
-                                        View
-                                    </NuxtLink>
+                                    <div class="flex items-center gap-2">
+                                        <NuxtLink :to="`/patients/${patient.id}`" class="btn btn-ghost btn-sm">
+                                            View
+                                        </NuxtLink>
+                                        <button @click="deletePatient(patient)" class="btn btn-ghost btn-sm text-error" title="Delete Patient">
+                                            <Trash2 class="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -80,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Search } from 'lucide-vue-next';
+import { Plus, Search, Trash2 } from 'lucide-vue-next';
 
 definePageMeta({
     middleware: ['auth'],
@@ -123,6 +128,33 @@ function handleSearch() {
     searchTimeout = setTimeout(() => {
         fetchPatients();
     }, 500);
+}
+
+
+// Delete patient
+const { confirm } = useConfirm();
+
+async function deletePatient(patient: Patient) {
+    const isConfirmed = await confirm({
+        title: 'Delete Patient',
+        message: `Are you sure you want to delete ${patient.fullName}? This action cannot be undone. All related data (registrations, medical history, vital signs, examinations, doctor recommendations, treating doctors, comments) will be deleted as well.`,
+        type: 'danger',
+        confirmText: 'Delete',
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+        await $fetch(`/api/patients/${patient.id}`, {
+            method: 'DELETE'
+        });
+        
+        // Remove from list
+        patients.value = patients.value.filter(p => p.id !== patient.id);
+    } catch (error) {
+        console.error('Failed to delete patient:', error);
+        alert('Failed to delete patient. Please try again.');
+    }
 }
 
 onMounted(() => {

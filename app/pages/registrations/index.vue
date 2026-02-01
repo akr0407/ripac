@@ -8,6 +8,12 @@
             </div>
         </div>
         
+        <!-- Search Bar -->
+        <div class="flex items-center gap-2 bg-base-100 p-2 rounded-lg border border-base-200">
+             <Search class="w-4 h-4 opacity-50 ml-2" />
+             <input v-model="search" @input="handleSearch" type="text" placeholder="Search by patient name, MR Number, or Reg Number..." class="input input-ghost input-sm w-full focus:outline-none" />
+        </div>
+        
         <!-- Table -->
         <div class="card bg-base-100/70 backdrop-blur shadow-xl border border-base-200">
             <div class="card-body p-0">
@@ -51,6 +57,8 @@
 </template>
 
 <script setup lang="ts">
+import { Search } from 'lucide-vue-next';
+
 definePageMeta({
     middleware: ['auth'],
 });
@@ -65,18 +73,40 @@ interface Registration {
 }
 
 const registrations = ref<Registration[]>([]);
+const search = ref('');
+const loading = ref(false);
 
 function formatDate(date: string | null) {
     if (!date) return '-';
     return new Date(date).toLocaleDateString();
 }
 
-onMounted(async () => {
+async function fetchRegistrations() {
+    loading.value = true;
     try {
-        const response = await $fetch<{ data: Registration[] }>('/api/registrations');
+        const response = await $fetch<{ data: Registration[] }>('/api/registrations', {
+            params: {
+                q: search.value
+            }
+        });
         registrations.value = response.data || [];
     } catch (error) {
         console.error('Failed to fetch registrations:', error);
+    } finally {
+        loading.value = false;
     }
+}
+
+// Debounced search
+let searchTimeout: any;
+function handleSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        fetchRegistrations();
+    }, 500);
+}
+
+onMounted(() => {
+    fetchRegistrations();
 });
 </script>
