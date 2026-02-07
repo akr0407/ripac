@@ -599,9 +599,14 @@ async function fetchComments() {
 
 async function fetchDoctors() {
   try {
-    const response = await $fetch<{ data: any[] }>('/api/doctors?limit=1000');
+    console.log('[fetchDoctors] Fetching doctors...');
+    const response = await $fetch<{ data: any[] }>('/api/doctors?all=true');
+    console.log('[fetchDoctors] Response:', response);
     doctorOptions.value = response.data.map((d: any) => ({ label: d.fullName, value: d.id }));
-  } catch (e) {}
+    console.log('[fetchDoctors] Mapped options:', doctorOptions.value);
+  } catch (e) {
+    console.error('[fetchDoctors] Error fetching doctors:', e);
+  }
 }
 
 

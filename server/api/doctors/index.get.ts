@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     const page = parseInt(query.page as string) || 1;
     const limit = parseInt(query.limit as string) || 10;
     const search = (query.q as string) || '';
+    const all = query.all === 'true'; // Support fetching all without pagination
 
     const offset = (page - 1) * limit;
 
@@ -48,13 +49,21 @@ export default defineEventHandler(async (event) => {
     const total = totalResult?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
-    // Get data
-    const data = await db
-        .select()
-        .from(doctors)
-        .where(whereCondition)
-        .limit(limit)
-        .offset(offset);
+    // Get data - if all=true, skip pagination
+    let data;
+    if (all) {
+        data = await db
+            .select()
+            .from(doctors)
+            .where(whereCondition);
+    } else {
+        data = await db
+            .select()
+            .from(doctors)
+            .where(whereCondition)
+            .limit(limit)
+            .offset(offset);
+    }
 
     return {
         data,
