@@ -1,6 +1,6 @@
 import { db } from '../../db';
 import { patients } from '../../db/schema';
-import { eq, and, or, ilike } from 'drizzle-orm';
+import { eq, and, or, ilike, count } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
     const session = await getUserSession(event);
@@ -34,11 +34,19 @@ export default defineEventHandler(async (event) => {
         ) : undefined
     );
 
+    // Get total count
+    const [totalResult] = await db
+        .select({ count: count() })
+        .from(patients)
+        .where(whereCondition);
+
+    const total = totalResult?.count || 0;
+
     const data = await db
         .select()
         .from(patients)
         .where(whereCondition)
         .limit(limit);
 
-    return { data };
+    return { data, total };
 });

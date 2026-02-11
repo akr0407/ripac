@@ -1,6 +1,6 @@
 import { db } from '../../db';
 import { registrations, patients } from '../../db/schema';
-import { eq, and, or, ilike } from 'drizzle-orm';
+import { eq, and, or, ilike, count } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
     const session = await getUserSession(event);
@@ -34,6 +34,20 @@ export default defineEventHandler(async (event) => {
         ) : undefined
     );
 
+    // Get total count
+    const [totalResult] = await db
+        .select({ count: count() })
+        .from(registrations)
+        .leftJoin(patients, eq(registrations.patientId, patients.id))
+        .where(whereCondition);
+
+    const total = totalResult?.count || 0;
+
+    // Pagination (using limit from query or default 20)
+    const limit = parseInt((query.limit as string) || '20');
+    const page = parseInt((query.page as string) || '1');
+    const offset = (page - 1) * limit;
+
     const data = await db
         .select({
             id: registrations.id,
@@ -46,7 +60,10 @@ export default defineEventHandler(async (event) => {
         })
         .from(registrations)
         .leftJoin(patients, eq(registrations.patientId, patients.id))
-        .where(whereCondition);
+        .where(whereCondition)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(registrations.createdAt);
 
-    return { data };
+    return { data, total };
 });

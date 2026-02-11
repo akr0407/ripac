@@ -62,9 +62,10 @@ export const useRegistrationPdf = () => {
 
             const treatingDoctors = (treatingDocsRaw || [])
                 .map((d: any) => {
-                    const docInfo = allDoctors.find((ad: any) => ad.id === d.doctorId);
+                    // Try to get name from joined data first, then fallback to lookup
+                    const name = d.doctorName || allDoctors.find((ad: any) => ad.id === d.doctorId)?.fullName;
                     return {
-                        name: docInfo?.fullName,
+                        name,
                         isMain: d.isMain
                     };
                 })
