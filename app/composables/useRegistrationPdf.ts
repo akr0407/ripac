@@ -239,6 +239,7 @@ export const useRegistrationPdf = () => {
                 columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } },
                 body: [
                     ['Physical Exam:', helper.val(examination.physicalExamination)],
+                    ['Other Exam:', helper.val(examination.otherExamination)],
                     ['Treatment:', helper.val(examination.treatment)]
                 ]
             });
