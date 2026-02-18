@@ -23,6 +23,10 @@ export const organizations = pgTable('organizations', {
         [key: string]: unknown;
     }>().default({}),
 
+    // Hospital API Credentials (stored securely)
+    hospitalApiUsername: varchar('hospital_api_username', { length: 255 }),
+    hospitalApiPassword: varchar('hospital_api_password', { length: 255 }),
+
     // Status
     isActive: boolean('is_active').default(true).notNull(),
 

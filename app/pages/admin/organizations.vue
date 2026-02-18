@@ -163,6 +163,17 @@
                             <span class="label-text-alt text-base-content/50 mt-1">Base URL of the hospital API (e.g., http://10.10.10.99:3020/api)</span>
                         </div>
 
+                        <div v-if="formData.hospitalApiEnabled" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label pl-0"><span class="label-text font-medium">API Username</span></label>
+                                <input v-model="formData.hospitalApiUsername" type="text" class="input input-bordered h-10" placeholder="Username" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label pl-0"><span class="label-text font-medium">API Password</span></label>
+                                <input v-model="formData.hospitalApiPassword" type="password" class="input input-bordered h-10" placeholder="Password" />
+                            </div>
+                        </div>
+
                          <!-- Is Active -->
                          <div class="form-control">
                             <label class="cursor-pointer label justify-start gap-4">
@@ -217,6 +228,8 @@ interface Organization {
         };
         [key: string]: unknown;
     };
+    hospitalApiUsername?: string | null;
+    hospitalApiPassword?: string | null;
 }
 
 const organizations = ref<Organization[]>([]);
@@ -238,7 +251,9 @@ const formData = ref({
     fax: '',
     isActive: true,
     hospitalApiEnabled: false,
-    hospitalApiBaseUrl: ''
+    hospitalApiBaseUrl: '',
+    hospitalApiUsername: '',
+    hospitalApiPassword: ''
 });
 
 // Fetch organizations
@@ -257,7 +272,8 @@ function openCreateModal() {
     formData.value = { 
         id: '', name: '', slug: '', description: '', logo: '', 
         address: '', phone: '', email: '', fax: '', isActive: true,
-        hospitalApiEnabled: false, hospitalApiBaseUrl: ''
+        hospitalApiEnabled: false, hospitalApiBaseUrl: '',
+        hospitalApiUsername: '', hospitalApiPassword: ''
     };
     error.value = '';
     showModal.value = true;
@@ -278,7 +294,9 @@ function openEditModal(org: Organization) {
         fax: org.fax || '',
         isActive: org.isActive,
         hospitalApiEnabled: org.settings?.hospitalApi?.enabled || false,
-        hospitalApiBaseUrl: org.settings?.hospitalApi?.baseUrl || ''
+        hospitalApiBaseUrl: org.settings?.hospitalApi?.baseUrl || '',
+        hospitalApiUsername: org.hospitalApiUsername || '',
+        hospitalApiPassword: org.hospitalApiPassword || ''
     };
     error.value = '';
     showModal.value = true;

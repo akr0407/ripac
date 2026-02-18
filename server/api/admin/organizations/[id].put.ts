@@ -49,6 +49,8 @@ export default defineEventHandler(async (event) => {
                 email: body.email || null,
                 fax: body.fax,
                 settings: newSettings,
+                hospitalApiUsername: body.hospitalApiUsername,
+                hospitalApiPassword: body.hospitalApiPassword,
                 updatedAt: new Date()
             })
             .where(eq(organizations.id, id as string))

@@ -77,6 +77,8 @@ export default defineEventHandler(async (event) => {
         email: email || null,
         fax,
         settings,
+        hospitalApiUsername: body.hospitalApiUsername || null,
+        hospitalApiPassword: body.hospitalApiPassword || null,
     }).returning();
 
     // Log audit action

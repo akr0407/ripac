@@ -191,15 +191,30 @@ export function createHospitalClient(baseUrl: string): HospitalApiClient | null 
 /**
  * Helper to get hospital client from organization settings
  */
-export function getHospitalClientFromOrgSettings(settings: {
-    hospitalApi?: {
-        enabled: boolean;
-        baseUrl: string;
-    };
+/**
+ * Helper to get hospital client from organization settings
+ */
+export function getHospitalClientFromOrgSettings(org: {
+    hospitalApiUsername?: string | null;
+    hospitalApiPassword?: string | null;
+    settings: unknown;
 }): HospitalApiClient | null {
-    if (!settings.hospitalApi?.enabled || !settings.hospitalApi?.baseUrl) {
+    const settings = (org.settings as Record<string, any>) || {};
+    const hospitalApi = settings.hospitalApi as { enabled?: boolean; baseUrl?: string } | undefined;
+
+    if (!hospitalApi?.enabled || !hospitalApi?.baseUrl) {
         return null;
     }
 
-    return createHospitalClient(settings.hospitalApi.baseUrl);
+    // Use DB credentials if available
+    if (org.hospitalApiUsername && org.hospitalApiPassword) {
+        return new HospitalApiClient({
+            baseUrl: hospitalApi.baseUrl,
+            username: org.hospitalApiUsername,
+            password: org.hospitalApiPassword
+        });
+    }
+
+    // Fallback to environment variables (legacy support)
+    return createHospitalClient(hospitalApi.baseUrl);
 }

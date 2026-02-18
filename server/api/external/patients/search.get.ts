@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
     let hospitalRegistrations: PatientRegistrationItem[] = [];
     let hospitalError: string | null = null;
 
-    const hospitalClient = getHospitalClientFromOrgSettings(org.settings || {});
+    const hospitalClient = getHospitalClientFromOrgSettings(org);
 
     if (hospitalClient) {
         try {

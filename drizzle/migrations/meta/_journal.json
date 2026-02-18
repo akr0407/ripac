@@ -50,6 +50,13 @@
       "when": 1768455580862,
       "tag": "0006_noisy_sleeper",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771394423361,
+      "tag": "0007_fluffy_omega_red",
+      "breakpoints": true
     }
   ]
 }

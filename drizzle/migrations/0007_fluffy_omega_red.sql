@@ -1,0 +1,2 @@
+ALTER TABLE "organizations" ADD COLUMN "hospital_api_username" varchar(255);--> statement-breakpoint
+ALTER TABLE "organizations" ADD COLUMN "hospital_api_password" varchar(255);--> statement-breakpoint
